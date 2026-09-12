@@ -1,0 +1,321 @@
+{
+  "common": {
+    "appName": "Swasth Setu",
+    "tagline": "One Patient Record. Continuous Care.",
+    "loading": "Loading...",
+    "error": "Something went wrong",
+    "retry": "Try again",
+    "save": "Save",
+    "saving": "Saving...",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "delete": "Delete",
+    "edit": "Edit",
+    "view": "View",
+    "search": "Search",
+    "filter": "Filter",
+    "noResults": "No results found",
+    "no_data": "No data available",
+    "noData": "No data available",
+    "back": "Back",
+    "next": "Next",
+    "submit": "Submit",
+    "close": "Close",
+    "yes": "Yes",
+    "no": "No",
+    "all": "All",
+    "none": "None",
+    "status": "Status",
+    "actions": "Actions",
+    "details": "Details",
+    "date": "Date",
+    "time": "Time",
+    "notes": "Notes",
+    "name": "Name",
+    "phone": "Phone",
+    "email": "Email",
+    "address": "Address",
+    "online": "Online",
+    "offline": "Offline",
+    "connecting": "Connecting...",
+    "syncing": "Syncing...",
+    "syncComplete": "Sync complete",
+    "pendingSync": "Pending sync",
+    "male": "Male",
+    "female": "Female",
+    "other": "Other",
+    "years": "years",
+    "minutes": "min",
+    "view_all": "View All",
+    "view_details": "View Details"
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "forgotPassword": "Forgot Password?",
+    "loginTitle": "Welcome to Swasth Setu",
+    "loginSubtitle": "Connecting rural India to quality healthcare",
+    "registerTitle": "Create Account",
+    "demoAccounts": "Demo Accounts",
+    "loginAs": "Login as",
+    "invalidCredentials": "Invalid email or password",
+    "sessionExpired": "Your session has expired. Please login again.",
+    "sign_out": "Sign Out"
+  },
+  "patient": {
+    "home": "Home",
+    "record": "Health Record",
+    "dashboard": {
+      "welcome": "Welcome,",
+      "subtitle": "Your health, our priority",
+      "triage_button": "Start Triage",
+      "active_referral": "Active Referral"
+    },
+    "nav": {
+      "home": "Home",
+      "health_record": "Health Record",
+      "referrals": "Referrals",
+      "follow_up": "Follow-ups",
+      "prescriptions": "Prescriptions",
+      "facilities": "Facilities",
+      "notifications": "Notifications",
+      "more": "More"
+    },
+    "health_record": {
+      "title": "My Health Record",
+      "demographics": "Personal Information",
+      "name": "Full Name",
+      "age": "Age",
+      "gender": "Gender",
+      "blood_group": "Blood Group",
+      "address": "Address",
+      "allergies": "Allergies",
+      "conditions": "Chronic Conditions",
+      "timeline": "Health Timeline"
+    },
+    "referrals": {
+      "title": "My Referrals",
+      "source": "From",
+      "destination": "To",
+      "reason": "Reason",
+      "urgency": "Urgency",
+      "doctor": "Referred By",
+      "detail": "Referral Details",
+      "info": "Referral Information",
+      "timeline": "Status Timeline"
+    },
+    "follow_ups": {
+      "title": "My Follow-ups",
+      "date": "Scheduled Date",
+      "reason": "Reason",
+      "worker": "ASHA Worker"
+    },
+    "prescriptions": {
+      "title": "My Prescriptions",
+      "doctor": "Prescribed By",
+      "dosage": "Dosage",
+      "frequency": "Frequency",
+      "duration": "Duration",
+      "instructions": "Instructions",
+      "notes": "Notes"
+    },
+    "notifications": {
+      "title": "Notifications",
+      "mark_read": "Mark as Read"
+    },
+    "facilities": {
+      "title": "Nearby Facilities",
+      "beds": "Beds",
+      "phone": "Contact"
+    },
+    "settings": {
+      "title": "Settings",
+      "profile": "My Profile",
+      "name": "Name",
+      "phone": "Phone Number",
+      "email": "Email",
+      "language": "Language"
+    },
+    "consultation": {
+      "active_call": "Active Consultation"
+    }
+  },
+  "asha": {
+    "dashboard": {
+      "title": "ASHA Dashboard",
+      "subtitle": "Manage your patients and follow-ups",
+      "recentReferrals": "Recent Referrals",
+      "recentReferralsDesc": "Latest referrals for your patients",
+      "viewAllReferrals": "View All Referrals",
+      "quickLinks": "Quick Actions"
+    },
+    "stats": {
+      "totalPatients": "Total Patients",
+      "highRisk": "High Risk",
+      "pendingFollowUps": "Pending Follow-ups"
+    },
+    "nav": {
+      "patients": "Patients",
+      "triage": "Triage",
+      "referrals": "Referrals",
+      "followUps": "Follow-ups",
+      "dashboard": "Dashboard"
+    },
+    "actions": {
+      "register": "Register Patient",
+      "triage": "Start Triage"
+    },
+    "patients": {
+      "title": "My Patients",
+      "search": "Search patients...",
+      "register": "Register New Patient",
+      "noPatients": "No patients assigned yet"
+    },
+    "visit": {
+      "title": "Record Visit"
+    },
+    "triage": {
+      "title": "Patient Triage",
+      "selectPatient": "Select Patient",
+      "selectSymptoms": "Select Symptoms",
+      "enterVitals": "Enter Vitals",
+      "duration": "Duration",
+      "result": "Triage Result",
+      "selfCare": "Self Care",
+      "teleconsult": "Teleconsultation",
+      "phcVisit": "PHC Visit",
+      "emergency": "EMERGENCY",
+      "durationDays": "How many days have symptoms lasted?",
+      "additionalNotes": "Additional Notes"
+    }
+  },
+  "doctor": {
+    "dashboard": {
+      "welcome": "Doctor Portal",
+      "portal": "Swasth Setu Doctor",
+      "pending_consultations": "Pending Consultations",
+      "today_queue": "Today's Queue",
+      "recent_rx": "Recent Prescriptions",
+      "join": "Join Consultation"
+    },
+    "consultations": {
+      "title": "Consultations",
+      "queue": "Consultation Queue",
+      "patient_info": "Patient Information",
+      "clinical_notes": "Clinical Notes",
+      "assessment": "Assessment",
+      "prescription": "Prescription",
+      "notes": "Notes",
+      "add_med": "Add Medication",
+      "med_name": "Medicine Name",
+      "med_dosage": "Dosage",
+      "med_freq": "Frequency",
+      "med_dur": "Duration",
+      "type": "Consultation Type",
+      "complete": "Complete Consultation",
+      "join_call": "Join Video Call"
+    },
+    "patients": {
+      "title": "My Patients"
+    },
+    "referrals": {
+      "title": "My Referrals",
+      "destination": "Referred To",
+      "reason": "Reason"
+    },
+    "nav": {
+      "dashboard": "Dashboard",
+      "queue": "Queue",
+      "consultations": "Consultations",
+      "referrals": "Referrals",
+      "patients": "Patients"
+    }
+  },
+  "admin": {
+    "dashboard": "Admin Dashboard",
+    "district_overview": "District Overview",
+    "total_patients": "Total Patients",
+    "active_referrals": "Active Referrals",
+    "pending_follow_ups": "Pending Follow-ups",
+    "emergencies": "Emergencies",
+    "stock_alerts": "Stock Alerts",
+    "recent_referrals": "Recent Referrals",
+    "recent_referrals_desc": "Latest referral activity in your district",
+    "recent_emergencies": "Recent Emergencies",
+    "recent_emergencies_desc": "Emergency cases reported today",
+    "facilities": "Facilities",
+    "facility_overview": "Facility Overview",
+    "referrals_tracking": "Referral Tracking",
+    "analytics": "Analytics",
+    "nav": {
+      "dashboard": "Dashboard",
+      "facilities": "Facilities",
+      "referrals": "Referrals",
+      "analytics": "Analytics"
+    }
+  },
+  "emergency": "Emergency",
+  "video": {
+    "connect_to_doctor": "Connect to Doctor",
+    "connecting": "Connecting...",
+    "disconnected": "Call Ended",
+    "end_call": "End Call",
+    "ensure_good_lighting": "Ensure good lighting for best video quality",
+    "live": "LIVE",
+    "local_camera_off": "Your camera is off",
+    "patient_camera_off": "Patient camera is off",
+    "ready": "Ready",
+    "ready_to_connect": "Ready to Connect",
+    "retry_connection": "Retry Connection",
+    "start_consultation": "Start Consultation",
+    "waiting_for_doctor": "Waiting for doctor to join...",
+    "waiting_for_doctor_video": "Waiting for doctor's video",
+    "waiting_for_patient": "Waiting for patient to connect..."
+  },
+  "triage": {
+    "title": "Patient Triage",
+    "step1": "Select Patient",
+    "step2": "Symptoms",
+    "step3": "Vital Signs",
+    "step4": "Duration",
+    "step5": "Result",
+    "result": {
+      "mild": "Mild",
+      "moderate": "Moderate",
+      "emergency": "Emergency"
+    }
+  },
+  "referral": {
+    "status": {
+      "created": "Created",
+      "pending": "Pending",
+      "acknowledged": "Acknowledged",
+      "in_transit": "In Transit",
+      "arrived": "Arrived",
+      "in_treatment": "In Treatment",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "rejected": "Rejected",
+      "no_show": "No Show"
+    }
+  },
+  "requested": "Requested",
+  "queued": "Queued",
+  "in_progress": "In Progress",
+  "completed": "Completed",
+  "cancelled": "Cancelled",
+  "routine": "Routine",
+  "urgent": "Urgent",
+  "upcoming": "Upcoming",
+  "due": "Due",
+  "overdue": "Overdue",
+  "missed": "Missed",
+  "nav.dashboard": "Dashboard",
+  "nav.facilities": "Facilities",
+  "nav.referrals": "Referrals",
+  "nav.analytics": "Analytics"
+}
