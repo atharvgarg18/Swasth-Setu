@@ -5,7 +5,7 @@ import { VideoPlayer } from './VideoPlayer';
 import { Button } from '@/components/ui/button';
 import { Mic, MicOff, Video, VideoOff, PhoneOff, FlipHorizontal, Loader2 } from 'lucide-react';
 import { useI18n } from '@/lib/i18n';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 
 export function MobileVideoRoom({ roomId, onCallEnded }: { roomId: string; onCallEnded?: () => void }) {
