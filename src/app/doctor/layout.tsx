@@ -29,7 +29,7 @@ export default function DoctorLayout({ children }: { children: React.ReactNode }
   const { user, profile, signOut } = useAuth()
   const { connectionState } = useConnectionStatus()
 
-  const isOnline = connectionState === 'SUBSCRIBED' || connectionState === 'CONNECTING'
+  const isOnline = connectionState === 'connected'
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full py-5 px-5">
