@@ -45,11 +45,18 @@ export default function DoctorConsultationRoom() {
   const [tab, setTab] = useState<Tab>('report');
 
   // Referral state
+  const [refMode, setRefMode] = useState<'specialist' | 'doctor'>('specialist');
   const [refService, setRefService] = useState('');
   const [refUrgency, setRefUrgency] = useState('routine');
   const [refReason, setRefReason] = useState('');
   const [refSent, setRefSent] = useState(false);
   const [refSending, setRefSending] = useState(false);
+
+  // Doctor-to-doctor referral
+  const [doctors, setDoctors] = useState<any[]>([]);
+  const [doctorsLoading, setDoctorsLoading] = useState(false);
+  const [selectedDoctor, setSelectedDoctor] = useState<{ id: string; full_name: string; specialty: string } | null>(null);
+
 
   useEffect(() => {
     async function load() {
@@ -88,6 +95,21 @@ export default function DoctorConsultationRoom() {
     setMeds(m => m.map((x, idx) => idx === i ? { ...x, [f]: v } : x));
   const removeMed = (i: number) => setMeds(m => m.filter((_, idx) => idx !== i));
 
+  // Fetch doctors when referral tab is opened in doctor mode
+  const loadDoctors = async () => {
+    if (doctors.length > 0) return;
+    setDoctorsLoading(true);
+    try {
+      const res = await fetch('/api/doctors');
+      if (res.ok) {
+        const json = await res.json();
+        // Exclude self
+        setDoctors((json.doctors ?? []).filter((d: any) => d.id !== user?.id));
+      }
+    } catch (_) {}
+    setDoctorsLoading(false);
+  };
+
   const complete = async () => {
     setSaving(true);
     const validMeds = meds.filter(m => m.name.trim());
@@ -110,14 +132,17 @@ export default function DoctorConsultationRoom() {
   };
 
   const sendReferral = async () => {
-    if (!refService || !refReason.trim()) return;
+    const serviceLabel = refMode === 'doctor'
+      ? (selectedDoctor ? `Doctor: ${selectedDoctor.full_name} (${selectedDoctor.specialty})` : '')
+      : refService;
+    if (!serviceLabel || !refReason.trim()) return;
     setRefSending(true);
     await fetch('/api/consultations/' + params.id, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         action: 'referral',
-        service: refService,
+        service: serviceLabel,
         urgency: refUrgency,
         reason: refReason,
         clinical_summary: assessment || notes,
@@ -128,6 +153,7 @@ export default function DoctorConsultationRoom() {
     setRefSent(true);
     setRefSending(false);
   };
+
 
   if (loading) return (
     <div className="h-screen flex items-center justify-center">
@@ -428,8 +454,38 @@ export default function DoctorConsultationRoom() {
             <div className="p-4 space-y-4">
               <div className="flex items-center gap-2">
                 <ArrowRightLeft className="w-4 h-4 text-purple-600" />
-                <h3 className="text-sm font-bold text-slate-800">Specialist Referral</h3>
+                <h3 className="text-sm font-bold text-slate-800">Referral</h3>
               </div>
+
+              {/* Mode toggle */}
+              {!refSent && (
+                <div className="flex rounded-lg overflow-hidden border border-slate-200 bg-slate-50">
+                  <button
+                    onClick={() => { setRefMode('specialist'); setSelectedDoctor(null); }}
+                    className={`flex-1 py-2 text-xs font-semibold transition-colors ${
+                      refMode === 'specialist'
+                        ? 'bg-white text-purple-700 shadow-sm'
+                        : 'text-slate-400 hover:text-slate-600'
+                    }`}
+                  >
+                    🏥 Specialist Type
+                  </button>
+                  <button
+                    onClick={() => {
+                      setRefMode('doctor');
+                      setRefService('');
+                      loadDoctors();
+                    }}
+                    className={`flex-1 py-2 text-xs font-semibold transition-colors ${
+                      refMode === 'doctor'
+                        ? 'bg-white text-purple-700 shadow-sm'
+                        : 'text-slate-400 hover:text-slate-600'
+                    }`}
+                  >
+                    👨‍⚕️ Another Doctor
+                  </button>
+                </div>
+              )}
 
               {refSent ? (
                 <div className="bg-purple-50 border border-purple-200 rounded-2xl p-6 text-center space-y-2">
@@ -438,11 +494,19 @@ export default function DoctorConsultationRoom() {
                   </div>
                   <p className="font-bold text-purple-800">Referral Created!</p>
                   <p className="text-sm text-purple-600">
-                    Patient referred to <span className="font-semibold">{refService}</span>
+                    {refMode === 'doctor' && selectedDoctor
+                      ? <>Patient referred to <span className="font-semibold">{selectedDoctor.full_name}</span></>
+                      : <>Patient referred to <span className="font-semibold">{refService}</span></>}
                   </p>
                   <p className="text-xs text-purple-500 capitalize">Priority: {refUrgency}</p>
                   <button
-                    onClick={() => { setRefSent(false); setRefService(''); setRefReason(''); setRefUrgency('routine'); }}
+                    onClick={() => {
+                      setRefSent(false);
+                      setRefService('');
+                      setRefReason('');
+                      setRefUrgency('routine');
+                      setSelectedDoctor(null);
+                    }}
                     className="text-xs text-purple-500 underline hover:text-purple-700 mt-1"
                   >
                     Create another referral
@@ -450,24 +514,77 @@ export default function DoctorConsultationRoom() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1.5">Specialist Type</label>
-                    <Select value={refService} onValueChange={v => setRefService(v ?? '')}>
-                      <SelectTrigger className="text-sm border-slate-200">
-                        <SelectValue placeholder="Select specialist..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {[
-                          'Cardiologist', 'Gynecologist / Obstetrician', 'Orthopedic Surgeon',
-                          'Pediatrician', 'Neurologist', 'Dermatologist', 'ENT Specialist',
-                          'Ophthalmologist', 'Psychiatrist / Psychologist', 'General Surgeon',
-                          'Oncologist', 'Endocrinologist', 'Pulmonologist', 'Nephrologist',
-                          'Gastroenterologist', 'Rheumatologist',
-                        ].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
 
+                  {/* ── Specialist mode ── */}
+                  {refMode === 'specialist' && (
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1.5">Specialist Type</label>
+                      <Select value={refService} onValueChange={v => setRefService(v ?? '')}>
+                        <SelectTrigger className="text-sm border-slate-200">
+                          <SelectValue placeholder="Select specialist..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {[
+                            'Cardiologist', 'Gynecologist / Obstetrician', 'Orthopedic Surgeon',
+                            'Pediatrician', 'Neurologist', 'Dermatologist', 'ENT Specialist',
+                            'Ophthalmologist', 'Psychiatrist / Psychologist', 'General Surgeon',
+                            'Oncologist', 'Endocrinologist', 'Pulmonologist', 'Nephrologist',
+                            'Gastroenterologist', 'Rheumatologist',
+                          ].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
+                  {/* ── Doctor-to-Doctor mode ── */}
+                  {refMode === 'doctor' && (
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1.5">
+                        Select Doctor
+                      </label>
+                      {doctorsLoading ? (
+                        <div className="flex justify-center py-4">
+                          <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
+                        </div>
+                      ) : doctors.length === 0 ? (
+                        <p className="text-xs text-slate-400 italic py-2">No other doctors found.</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {doctors.map((doc) => {
+                            const isSelected = selectedDoctor?.id === doc.id;
+                            return (
+                              <button
+                                key={doc.id}
+                                onClick={() => setSelectedDoctor(doc)}
+                                className={`w-full text-left flex items-center gap-3 p-3 rounded-xl border-2 transition-all ${
+                                  isSelected
+                                    ? 'border-purple-400 bg-purple-50'
+                                    : 'border-slate-200 bg-white hover:border-slate-300'
+                                }`}
+                              >
+                                <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ${
+                                  isSelected ? 'bg-purple-200 text-purple-800' : 'bg-slate-100 text-slate-600'
+                                }`}>
+                                  {doc.full_name.split(' ').map((n: string) => n[0]).slice(0, 2).join('')}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className={`text-sm font-semibold truncate ${isSelected ? 'text-purple-900' : 'text-slate-800'}`}>
+                                    {doc.full_name}
+                                  </p>
+                                  <p className="text-xs text-slate-400 truncate">{doc.specialty}</p>
+                                </div>
+                                {isSelected && (
+                                  <CheckCircle className="w-4 h-4 text-purple-600 flex-shrink-0" />
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Urgency — shared */}
                   <div>
                     <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1.5">Urgency</label>
                     <div className="grid grid-cols-3 gap-2">
@@ -491,27 +608,39 @@ export default function DoctorConsultationRoom() {
                     </div>
                   </div>
 
+                  {/* Reason — shared */}
                   <div>
-                    <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1.5">Reason for Referral</label>
+                    <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1.5">
+                      {refMode === 'doctor' ? 'Reason for Referral' : 'Reason for Referral'}
+                    </label>
                     <Textarea
                       value={refReason}
                       onChange={e => setRefReason(e.target.value)}
-                      placeholder="Clinical reason for specialist referral..."
-                      className="text-sm min-h-[100px] resize-none border-slate-200"
+                      placeholder={
+                        refMode === 'doctor'
+                          ? 'Why are you referring to this doctor? Clinical notes for them...'
+                          : 'Clinical reason for specialist referral...'
+                      }
+                      className="text-sm min-h-[90px] resize-none border-slate-200"
                     />
                   </div>
 
                   <Button
                     onClick={sendReferral}
-                    disabled={refSending || !refService || !refReason.trim()}
+                    disabled={
+                      refSending ||
+                      !refReason.trim() ||
+                      (refMode === 'specialist' ? !refService : !selectedDoctor)
+                    }
                     className="w-full bg-purple-600 hover:bg-purple-700 h-11 font-semibold"
                   >
                     {refSending
                       ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Creating...</>
-                      : <><Send className="w-4 h-4 mr-2" />Create Referral</>}
+                      : <><Send className="w-4 h-4 mr-2" />{refMode === 'doctor' ? 'Refer to Doctor' : 'Create Referral'}</>}
                   </Button>
                 </div>
               )}
+
             </div>
           )}
         </div>

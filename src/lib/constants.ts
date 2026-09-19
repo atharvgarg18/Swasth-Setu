@@ -129,6 +129,8 @@ export const DEMO_CREDENTIALS = {
   patient: { email: 'meera@demo.gramincare.in', password: 'demo123456' },
   asha: { email: 'priya@demo.gramincare.in', password: 'demo123456' },
   doctor: { email: 'rajesh@demo.gramincare.in', password: 'demo123456' },
+  'doctor (cardiologist)': { email: 'arjun@demo.gramincare.in', password: 'demo123456' },
   facility_admin: { email: 'sunita@demo.gramincare.in', password: 'demo123456' },
   district_admin: { email: 'amit@demo.gramincare.in', password: 'demo123456' },
 } as const;
+
