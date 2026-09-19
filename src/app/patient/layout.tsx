@@ -3,11 +3,11 @@
 import React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { 
-  Home, 
-  FileHeart, 
-  ArrowRightLeft, 
-  MapPin, 
+import {
+  Home,
+  FileHeart,
+  ArrowRightLeft,
+  MapPin,
   Menu,
   Bell,
   Globe,
@@ -15,16 +15,13 @@ import {
   CalendarCheck,
   Pill,
   LogOut,
-  User
 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet'
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
 import { useAuth } from '@/lib/auth/provider'
 import { useI18n } from '@/lib/i18n'
@@ -45,100 +42,146 @@ export default function PatientLayout({ children }: { children: React.ReactNode 
   const { unreadCount } = useNotifications(user?.id)
 
   return (
-    <div className="flex flex-col min-h-screen bg-white">
-      {/* Minimal Header */}
-      <header className="sticky top-0 z-50 flex items-center justify-between px-4 py-3 bg-white border-b shadow-sm h-14">
-        <h1 className="text-xl font-semibold text-emerald-700 tracking-tight">{APP_NAME}</h1>
-        
-        <div className="flex items-center space-x-1">
-          <Button variant="ghost" size="icon" className="relative text-slate-600" aria-label={t('patient.nav.notifications')}>
-            <Bell className="w-6 h-6" />
-            {unreadCount > 0 && (
-              <Badge className="absolute top-0 right-0 px-1 min-w-[1.25rem] h-5 flex items-center justify-center bg-red-500 text-white rounded-full text-xs">
-                {unreadCount}
-              </Badge>
-            )}
-          </Button>
+    <div className="flex flex-col min-h-screen" style={{ backgroundColor: 'oklch(0.94 0.014 80)' }}>
 
+      {/* ── Minimal Header ───────────────────────────────── */}
+      <header
+        className="sticky top-0 z-50 flex items-center justify-between px-4 h-12"
+        style={{
+          backgroundColor: 'oklch(0.94 0.014 80)',
+          borderBottom: '1px solid oklch(0.86 0.012 80)',
+        }}
+      >
+        <span
+          className="text-sm font-semibold tracking-wide"
+          style={{ color: 'oklch(0.37 0.09 158)' }}
+        >
+          {APP_NAME}
+        </span>
+
+        <div className="flex items-center gap-0.5">
+          {/* Notifications */}
+          <Link
+            href="/patient/notifications"
+            className="relative flex items-center justify-center w-9 h-9 rounded transition-colors hover:bg-black/[0.04]"
+            aria-label="Notifications"
+          >
+            <Bell className="w-5 h-5" style={{ color: 'oklch(0.35 0.012 60)' }} />
+            {unreadCount > 0 && (
+              <span
+                className="absolute top-1 right-1 w-2 h-2 rounded-full"
+                style={{ backgroundColor: 'oklch(0.44 0.18 24)' }}
+              />
+            )}
+          </Link>
+
+          {/* Language */}
           <DropdownMenu>
-            <DropdownMenuTrigger className="inline-flex items-center justify-center rounded-md text-sm font-medium h-10 w-10 hover:bg-slate-100 hover:text-slate-900 cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring text-slate-600" aria-label={t('patient.settings.language')}>
-              <Globe className="w-6 h-6" />
+            <DropdownMenuTrigger
+              className="flex items-center justify-center w-9 h-9 rounded transition-colors hover:bg-black/[0.04] focus-visible:outline-none"
+              aria-label="Language"
+            >
+              <Globe className="w-5 h-5" style={{ color: 'oklch(0.35 0.012 60)' }} />
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-32">
-              <DropdownMenuItem onClick={() => setLocale('en')} className="text-base py-2">English</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setLocale('mr')} className="text-base py-2">मराठी</DropdownMenuItem>
+            <DropdownMenuContent align="end" className="w-28">
+              <DropdownMenuItem onClick={() => setLocale('en')}>English</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setLocale('mr')}>मराठी</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </header>
 
-      {/* Main Content Area */}
+      {/* ── Main content ─────────────────────────────────── */}
       <main className="flex-1 overflow-y-auto pb-20">
-        <div className="max-w-md mx-auto w-full px-4 py-6">
+        <div className="max-w-md mx-auto w-full px-4 py-5">
           {children}
         </div>
       </main>
 
-      {/* Bottom Navigation PWA */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t flex items-center justify-between px-2 pb-safe shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-50">
+      {/* ── Bottom navigation ────────────────────────────── */}
+      <nav
+        className="fixed bottom-0 left-0 right-0 z-50"
+        style={{
+          backgroundColor: 'oklch(0.94 0.014 80)',
+          borderTop: '1px solid oklch(0.86 0.012 80)',
+        }}
+      >
         <div className="flex w-full justify-between max-w-md mx-auto">
           {mainNavItems.map((item) => {
-            const isActive = pathname === item.path || (item.path !== '/patient' && pathname.startsWith(item.path))
+            const isActive = pathname === item.path ||
+              (item.path !== '/patient' && pathname.startsWith(item.path))
             return (
-              <Link 
-                key={item.path} 
+              <Link
+                key={item.path}
                 href={item.path}
-                className={`flex flex-col items-center justify-center w-full py-3 space-y-1 ${
-                  isActive ? 'text-emerald-700' : 'text-slate-500 hover:text-emerald-600'
-                }`}
+                className="flex flex-col items-center justify-center flex-1 py-2.5 gap-0.5 transition-colors"
+                style={{ color: isActive ? 'oklch(0.37 0.09 158)' : 'oklch(0.52 0.012 60)' }}
               >
-                <item.icon className={`w-6 h-6 ${isActive ? 'fill-emerald-100' : ''}`} />
-                <span className="text-[11px] font-medium tracking-wide">{t(item.labelKey)}</span>
+                <item.icon
+                  className="w-5 h-5"
+                  strokeWidth={isActive ? 2.2 : 1.7}
+                />
+                <span className="text-[10px] font-medium tracking-wide">
+                  {t(item.labelKey)}
+                </span>
+                {/* Active indicator */}
+                {isActive && (
+                  <span
+                    className="absolute bottom-0 w-8 h-0.5 rounded-t"
+                    style={{ backgroundColor: 'oklch(0.37 0.09 158)' }}
+                  />
+                )}
               </Link>
             )
           })}
-          
-          {/* More Menu Sheet */}
+
+          {/* More menu */}
           <Sheet>
-            <SheetTrigger className="flex flex-col items-center justify-center w-full py-3 space-y-1 text-slate-500 hover:text-emerald-600 cursor-pointer">
-                <Menu className="w-6 h-6" />
-                <span className="text-[11px] font-medium tracking-wide">{t('patient.nav.more', 'More')}</span>
+            <SheetTrigger
+              className="flex flex-col items-center justify-center flex-1 py-2.5 gap-0.5 transition-colors"
+              style={{ color: 'oklch(0.52 0.012 60)' }}
+            >
+              <Menu className="w-5 h-5" strokeWidth={1.7} />
+              <span className="text-[10px] font-medium tracking-wide">
+                {t('patient.nav.more', 'More')}
+              </span>
             </SheetTrigger>
-            <SheetContent side="bottom" className="rounded-t-2xl px-4 py-6 h-auto">
+            <SheetContent
+              side="bottom"
+              className="rounded-t-xl px-4 py-5 h-auto"
+              style={{ backgroundColor: 'oklch(0.94 0.014 80)' }}
+            >
               <SheetTitle className="sr-only">More Options</SheetTitle>
-              <div className="grid grid-cols-4 gap-4 mb-6">
-                <Link href="/patient/follow-ups" className="flex flex-col items-center gap-2">
-                  <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-700">
-                    <CalendarCheck className="w-6 h-6" />
-                  </div>
-                  <span className="text-xs text-center font-medium">{t('patient.nav.follow_up')}</span>
-                </Link>
-                <Link href="/patient/prescriptions" className="flex flex-col items-center gap-2">
-                  <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-700">
-                    <Pill className="w-6 h-6" />
-                  </div>
-                  <span className="text-xs text-center font-medium">{t('patient.nav.prescriptions')}</span>
-                </Link>
-                <Link href="/patient/notifications" className="flex flex-col items-center gap-2">
-                  <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-700 relative">
-                    <Bell className="w-6 h-6" />
-                    {unreadCount > 0 && <span className="absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></span>}
-                  </div>
-                  <span className="text-xs text-center font-medium">{t('patient.nav.notifications')}</span>
-                </Link>
-                <Link href="/patient/settings" className="flex flex-col items-center gap-2">
-                  <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-700">
-                    <Settings className="w-6 h-6" />
-                  </div>
-                  <span className="text-xs text-center font-medium">{t('patient.settings.title')}</span>
-                </Link>
+              <div className="grid grid-cols-4 gap-3 mb-5">
+                {[
+                  { href: '/patient/follow-ups', icon: CalendarCheck, label: t('patient.nav.follow_up') },
+                  { href: '/patient/prescriptions', icon: Pill, label: t('patient.nav.prescriptions') },
+                  { href: '/patient/notifications', icon: Bell, label: t('patient.nav.notifications') },
+                  { href: '/patient/settings', icon: Settings, label: t('patient.settings.title') },
+                ].map((item) => (
+                  <Link key={item.href} href={item.href} className="flex flex-col items-center gap-1.5">
+                    <div
+                      className="w-11 h-11 rounded-lg flex items-center justify-center"
+                      style={{ backgroundColor: 'oklch(0.90 0.012 80)' }}
+                    >
+                      <item.icon className="w-5 h-5" style={{ color: 'oklch(0.37 0.09 158)' }} />
+                    </div>
+                    <span className="text-xs text-center font-medium"
+                          style={{ color: 'oklch(0.25 0.012 60)' }}>
+                      {item.label}
+                    </span>
+                  </Link>
+                ))}
               </div>
-              
-              <div className="border-t pt-4">
-                <Button variant="outline" className="w-full flex items-center justify-center gap-2 text-slate-700 h-12 text-base" onClick={signOut}>
-                  <LogOut className="w-5 h-5" />
+              <div style={{ borderTop: '1px solid oklch(0.86 0.012 80)', paddingTop: '1rem' }}>
+                <button
+                  className="w-full flex items-center justify-center gap-2 h-10 rounded text-sm font-medium transition-colors hover:bg-black/[0.04]"
+                  style={{ color: 'oklch(0.44 0.18 24)' }}
+                  onClick={signOut}
+                >
+                  <LogOut className="w-4 h-4" />
                   {t('auth.sign_out')}
-                </Button>
+                </button>
               </div>
             </SheetContent>
           </Sheet>

@@ -1,21 +1,41 @@
 'use client';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/provider';
-import { useI18n } from '@/lib/i18n';
 import { createClient } from '@/lib/supabase/client';
-import { StatusBadge } from '@/components/shared/StatusBadge';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Loader2, Video, Phone, RefreshCw, Clock, X } from 'lucide-react';
+import { Loader2, Video, RefreshCw, X, CheckCircle2 } from 'lucide-react';
+
+// Priority pill config — matches the inspiration screenshots
+const PRIORITY: Record<string, { label: string; bg: string; text: string }> = {
+  emergency: { label: 'Emergency', bg: '#f5e4e1', text: '#7a1e12' },
+  urgent:    { label: 'Urgent',    bg: '#fef3e2', text: '#7a4a00' },
+  moderate:  { label: 'Moderate',  bg: '#fef3e2', text: '#7a4a00' },
+  routine:   { label: 'Mild',      bg: '#ebebeb', text: '#4a4a4a' },
+};
+
+function PriorityPill({ priority }: { priority: string }) {
+  const cfg = PRIORITY[priority] ?? PRIORITY.routine;
+  return (
+    <span
+      className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold flex-shrink-0"
+      style={{ backgroundColor: cfg.bg, color: cfg.text }}
+    >
+      {cfg.label}
+    </span>
+  );
+}
+
+function WaitTime({ createdAt }: { createdAt: string }) {
+  const mins = Math.floor((Date.now() - new Date(createdAt).getTime()) / 60000);
+  const label = mins < 1 ? 'just now' : mins < 60 ? `waiting ${mins} min` : `waiting ${Math.floor(mins / 60)}h`;
+  return <span>{label}</span>;
+}
 
 export default function ConsultationsQueue() {
   const { user } = useAuth();
-  const { t } = useI18n();
   const router = useRouter();
-  const supabase = createClient();
+  const supabase = useRef(createClient()).current;
   const [pendingCalls, setPendingCalls] = useState<any[]>([]);
   const [myConsultations, setMyConsultations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -24,25 +44,22 @@ export default function ConsultationsQueue() {
 
   const load = useCallback(async () => {
     if (!user) return;
-
-    // Only show truly pending calls — no doctor, status=requested, not older than 2 hours
     const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
+
     const { data: pending } = await supabase.from('consultations')
       .select('*, patient:patients(full_name, date_of_birth, gender)')
       .eq('consultation_type', 'teleconsult_video')
       .eq('status', 'requested')
       .is('doctor_id', null)
       .gte('created_at', twoHoursAgo)
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: true }); // oldest first = longest wait
 
-    // My active consultations (in progress)
     const { data: mine } = await supabase.from('consultations')
       .select('*, patient:patients(full_name)')
       .eq('doctor_id', user.id)
       .in('status', ['in_progress', 'queued'])
       .order('created_at', { ascending: false });
 
-    // My recently completed (last 24h) — show as history
     const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
     const { data: done } = await supabase.from('consultations')
       .select('*, patient:patients(full_name)')
@@ -59,162 +76,208 @@ export default function ConsultationsQueue() {
 
   useEffect(() => { load(); }, [load]);
 
-  // Real-time subscription — fixed filter
   useEffect(() => {
-    const ch = supabase.channel('teleconsult-queue')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'consultations',
-      }, () => { load(); })
+    const ch = supabase.channel('queue-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'consultations' }, () => load())
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [supabase, load]);
 
-  const joinCall = async (consultationId: string) => {
+  const joinCall = async (id: string) => {
     if (!user) return;
-    setJoining(consultationId);
-    // Use server API to bypass RLS (doctor_id=null blocks direct update)
-    await fetch('/api/consultations/' + consultationId, {
+    setJoining(id);
+    await fetch('/api/consultations/' + id, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'claim', doctor_id: user.id }),
     });
-    router.push('/doctor/consultations/' + consultationId);
+    router.push('/doctor/consultations/' + id);
   };
 
-  const dismissCall = async (consultationId: string) => {
-    setDismissing(consultationId);
-    await supabase.from('consultations').update({
-      status: 'cancelled',
-    }).eq('id', consultationId).eq('status', 'requested').is('doctor_id', null);
-    setPendingCalls(prev => prev.filter(c => c.id !== consultationId));
+  const dismissCall = async (id: string) => {
+    setDismissing(id);
+    await supabase.from('consultations').update({ status: 'cancelled' })
+      .eq('id', id).eq('status', 'requested').is('doctor_id', null);
+    setPendingCalls(prev => prev.filter(c => c.id !== id));
     setDismissing(null);
   };
 
-  const dismissAll = async () => {
-    const ids = pendingCalls.map((c: any) => c.id);
-    for (const id of ids) await dismissCall(id);
-  };
+  if (loading) return (
+    <div className="p-10 flex justify-center">
+      <Loader2 className="animate-spin h-5 w-5" style={{ color: 'oklch(0.37 0.09 158)' }} />
+    </div>
+  );
 
-  const formatAge = (dateStr: string) => {
-    const mins = Math.floor((Date.now() - new Date(dateStr).getTime()) / 60000);
-    if (mins < 1) return 'Just now';
-    if (mins < 60) return mins + 'm ago';
-    return Math.floor(mins / 60) + 'h ago';
-  };
-
-  if (loading) return <div className="p-8 flex justify-center"><Loader2 className="animate-spin h-8 w-8 text-emerald-600" /></div>;
+  const hasAnything = pendingCalls.length > 0 || myConsultations.length > 0;
 
   return (
-    <div className="container max-w-5xl mx-auto p-4 space-y-8">
+    <div className="max-w-4xl mx-auto px-6 py-6">
 
-      {/* Incoming Teleconsult Requests */}
+      {/* ── Page header ──────────────────────────────────── */}
+      <div className="flex items-center justify-between mb-5">
+        <div>
+          <h1 className="text-xl font-bold" style={{ color: 'oklch(0.15 0.012 60)' }}>
+            Teleconsultation queue
+          </h1>
+          <p className="text-sm mt-0.5" style={{ color: 'oklch(0.52 0.012 60)' }}>
+            Sorted by urgency, not by arrival time.
+          </p>
+        </div>
+        <button
+          onClick={load}
+          className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded border transition-colors hover:bg-black/[0.04]"
+          style={{ borderColor: 'oklch(0.84 0.012 80)', color: 'oklch(0.47 0.012 60)' }}
+        >
+          <RefreshCw className="w-3.5 h-3.5" />
+          Refresh
+        </button>
+      </div>
+
+      {/* ── Incoming requests ─────────────────────────────── */}
       {pendingCalls.length > 0 && (
-        <div className="space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="w-3 h-3 rounded-full bg-red-500 animate-pulse" />
-            <h2 className="text-xl font-bold text-red-700">Incoming Video Calls</h2>
-            <Badge className="bg-red-500 text-white">{pendingCalls.length}</Badge>
-            <button onClick={dismissAll} className="text-xs text-red-500 hover:text-red-700 underline ml-2">
-              Dismiss all
-            </button>
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-2">
+            <span
+              className="inline-block w-2 h-2 rounded-full animate-pulse flex-shrink-0"
+              style={{ backgroundColor: 'oklch(0.44 0.18 24)' }}
+            />
+            <span className="text-sm font-semibold" style={{ color: 'oklch(0.20 0.012 60)' }}>
+              Incoming requests
+            </span>
+            {pendingCalls.length > 1 && (
+              <button
+                onClick={() => pendingCalls.forEach(c => dismissCall(c.id))}
+                className="text-xs ml-auto transition-colors hover:opacity-70"
+                style={{ color: 'oklch(0.52 0.012 60)' }}
+              >
+                Dismiss all
+              </button>
+            )}
           </div>
-          <div className="space-y-3">
-            {pendingCalls.map(c => (
-              <Card key={c.id} className="border-2 border-red-300 bg-red-50 shadow-md">
-                <CardContent className="p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
-                      <Video className="w-6 h-6 text-red-600" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-lg text-red-900">{(c.patient as any)?.full_name ?? 'Patient'}</h3>
-                      {c.chief_complaint && (
-                        <p className="text-sm text-red-700 line-clamp-1">{c.chief_complaint}</p>
-                      )}
-                      <div className="flex items-center gap-1 mt-1 text-xs text-red-600">
-                        <Clock className="w-3 h-3" />
-                        {formatAge(c.created_at)}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    {/* Dismiss button */}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => dismissCall(c.id)}
-                      disabled={dismissing === c.id}
-                      className="border-red-300 text-red-600 hover:bg-red-100 h-10 px-3"
-                      title="Dismiss (cancel this request)"
-                    >
-                      {dismissing === c.id
-                        ? <Loader2 className="w-4 h-4 animate-spin" />
-                        : <X className="w-4 h-4" />}
-                    </Button>
-                    {/* Join button */}
-                    <Button
-                      onClick={() => joinCall(c.id)}
-                      disabled={joining === c.id}
-                      className="bg-red-600 hover:bg-red-700 h-10 px-5 font-semibold"
-                    >
-                      {joining === c.id
-                        ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Joining...</>
-                        : <><Video className="w-4 h-4 mr-2" />Join Call</>}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+
+          {/* Queue rows */}
+          <div className="rounded-lg overflow-hidden border bg-white"
+               style={{ borderColor: 'oklch(0.86 0.012 80)' }}>
+            {pendingCalls.map((c, idx) => (
+              <div
+                key={c.id}
+                className="flex items-center gap-4 px-4 py-3.5"
+                style={{
+                  borderTop: idx > 0 ? '1px solid oklch(0.90 0.01 80)' : undefined,
+                }}
+              >
+                {/* Priority pill */}
+                <PriorityPill priority={c.priority ?? 'routine'} />
+
+                {/* Patient info */}
+                <div className="flex-1 min-w-0">
+                  <span className="font-semibold text-sm" style={{ color: 'oklch(0.15 0.012 60)' }}>
+                    {(c.patient as any)?.full_name ?? 'Patient'}
+                  </span>
+                  <span className="text-xs ml-2" style={{ color: 'oklch(0.55 0.01 60)' }}>
+                    · <WaitTime createdAt={c.created_at} />
+                  </span>
+                  {c.chief_complaint && (
+                    <p className="text-xs mt-0.5 truncate" style={{ color: 'oklch(0.52 0.012 60)' }}>
+                      {c.chief_complaint}
+                    </p>
+                  )}
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <button
+                    onClick={() => dismissCall(c.id)}
+                    disabled={dismissing === c.id}
+                    className="w-7 h-7 flex items-center justify-center rounded hover:bg-black/[0.05] transition-colors"
+                    title="Dismiss"
+                    style={{ color: 'oklch(0.55 0.01 60)' }}
+                  >
+                    {dismissing === c.id
+                      ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      : <X className="w-3.5 h-3.5" />}
+                  </button>
+                  <button
+                    onClick={() => joinCall(c.id)}
+                    disabled={joining === c.id}
+                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded text-xs font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
+                    style={{
+                      backgroundColor: (c.priority === 'emergency')
+                        ? 'oklch(0.44 0.18 24)'
+                        : 'oklch(0.37 0.09 158)',
+                    }}
+                  >
+                    {joining === c.id
+                      ? <><Loader2 className="w-3.5 h-3.5 animate-spin" />Joining...</>
+                      : <><Video className="w-3.5 h-3.5" />{c.priority === 'emergency' ? 'Accept emergency' : 'Start consult'}</>}
+                  </button>
+                </div>
+              </div>
             ))}
           </div>
         </div>
       )}
 
-      {/* My Consultations */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-emerald-800">Consultation Queue</h1>
-          <Button variant="outline" size="sm" onClick={load}>
-            <RefreshCw className="w-4 h-4 mr-2" />Refresh
-          </Button>
-        </div>
-
-        {myConsultations.length === 0 && pendingCalls.length === 0 ? (
-          <Card>
-            <CardContent className="p-12 text-center space-y-3">
-              <Phone className="w-12 h-12 text-slate-300 mx-auto" />
-              <p className="text-slate-500">No active consultations</p>
-              <p className="text-sm text-slate-400">Waiting for teleconsult requests...</p>
-            </CardContent>
-          </Card>
-        ) : myConsultations.length > 0 ? (
-          <div className="grid gap-4">
-            {myConsultations.map(c => (
-              <Card key={c.id} className={c.status === 'completed' ? 'border-slate-200 opacity-70' : 'border-emerald-200'}>
-                <CardContent className="p-4 flex items-center justify-between gap-4">
-                  <div>
-                    <h3 className="font-bold">{(c.patient as any)?.full_name ?? 'Patient'}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {c.consultation_type} · {new Date(c.created_at).toLocaleString()}
-                    </p>
-                    <div className="flex gap-2 mt-1">
-                      <StatusBadge status={{ kind: 'consultation', value: c.status }} />
-                    </div>
-                  </div>
-                  {c.status !== 'completed' && (
-                    <Link href={'/doctor/consultations/' + c.id}>
-                      <Button className="bg-emerald-600 hover:bg-emerald-700">
-                        <Video className="w-4 h-4 mr-2" />Rejoin
-                      </Button>
-                    </Link>
-                  )}
-                </CardContent>
-              </Card>
+      {/* ── My consultations ──────────────────────────────── */}
+      {myConsultations.length > 0 && (
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wider mb-2"
+             style={{ color: 'oklch(0.55 0.01 60)' }}>
+            My consultations
+          </p>
+          <div className="rounded-lg overflow-hidden border bg-white"
+               style={{ borderColor: 'oklch(0.86 0.012 80)' }}>
+            {myConsultations.map((c, idx) => (
+              <div
+                key={c.id}
+                className="flex items-center gap-4 px-4 py-3.5"
+                style={{
+                  borderTop: idx > 0 ? '1px solid oklch(0.90 0.01 80)' : undefined,
+                  opacity: c.status === 'completed' ? 0.6 : 1,
+                }}
+              >
+                <div className="flex-1 min-w-0">
+                  <span className="font-medium text-sm" style={{ color: 'oklch(0.15 0.012 60)' }}>
+                    {(c.patient as any)?.full_name ?? 'Patient'}
+                  </span>
+                  <span className="text-xs ml-2 capitalize" style={{ color: 'oklch(0.55 0.01 60)' }}>
+                    · {c.status.replace('_', ' ')}
+                    · {new Date(c.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </div>
+                {c.status === 'completed' ? (
+                  <CheckCircle2 className="w-4 h-4" style={{ color: 'oklch(0.50 0.10 155)' }} />
+                ) : (
+                  <Link href={'/doctor/consultations/' + c.id}>
+                    <button
+                      className="flex items-center gap-1.5 px-3.5 py-1.5 rounded text-xs font-semibold text-white"
+                      style={{ backgroundColor: 'oklch(0.37 0.09 158)' }}
+                    >
+                      <Video className="w-3.5 h-3.5" />
+                      Rejoin
+                    </button>
+                  </Link>
+                )}
+              </div>
             ))}
           </div>
-        ) : null}
-      </div>
+        </div>
+      )}
+
+      {/* ── Empty state ───────────────────────────────────── */}
+      {!hasAnything && (
+        <div
+          className="rounded-lg border py-16 text-center"
+          style={{ borderColor: 'oklch(0.86 0.012 80)', backgroundColor: 'white' }}
+        >
+          <p className="font-medium text-sm" style={{ color: 'oklch(0.35 0.012 60)' }}>
+            No active consultations
+          </p>
+          <p className="text-xs mt-1" style={{ color: 'oklch(0.60 0.01 60)' }}>
+            Waiting for teleconsult requests...
+          </p>
+        </div>
+      )}
     </div>
   );
 }
