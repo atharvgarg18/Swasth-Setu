@@ -15,13 +15,14 @@ export function MobileVideoRoom({ roomId, onCallEnded }: { roomId: string; onCal
   } = useVideoCall({ roomId, role: 'patient' });
 
   // Tell parent page when call ends so they can show "waiting for report" UI
-  const prevStatusRef = require('react').useRef('idle');
-  require('react').useEffect(() => {
+  const prevStatusRef = useRef('idle');
+  useEffect(() => {
     if (prevStatusRef.current !== 'disconnected' && status === 'disconnected' && onCallEnded) {
       onCallEnded();
     }
     prevStatusRef.current = status;
   }, [status, onCallEnded]);
+
 
   const { locale } = useI18n();
   const isMr = locale === 'mr';

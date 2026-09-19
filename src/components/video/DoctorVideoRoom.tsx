@@ -5,18 +5,31 @@ import { VideoPlayer } from './VideoPlayer';
 import { Button } from '@/components/ui/button';
 import { Mic, MicOff, Video, VideoOff, PhoneOff, Loader2 } from 'lucide-react';
 import { useI18n } from '@/lib/i18n';
+import { useEffect, useRef } from 'react';
 
 interface DoctorVideoRoomProps {
   roomId: string;
   patientName: string;
+  /** Parent can call this ref to trigger endCall (e.g. when completing consultation) */
+  onEndCallRef?: React.MutableRefObject<(() => void) | null>;
 }
 
-export function DoctorVideoRoom({ roomId, patientName }: DoctorVideoRoomProps) {
+export function DoctorVideoRoom({ roomId, patientName, onEndCallRef }: DoctorVideoRoomProps) {
   const {
     localStream, remoteStream, status, isMuted, isVideoOff,
     startCall, endCall, toggleMute, toggleVideo,
   } = useVideoCall({ roomId, role: 'doctor' });
   const { t } = useI18n();
+
+  // Expose endCall to parent via ref
+  useEffect(() => {
+    if (onEndCallRef) {
+      onEndCallRef.current = endCall;
+    }
+    return () => {
+      if (onEndCallRef) onEndCallRef.current = null;
+    };
+  }, [endCall, onEndCallRef]);
 
   const isLive = status === 'connected';
   const isStarted = status !== 'idle' && status !== 'disconnected' && status !== 'requesting-media';

@@ -44,6 +44,10 @@ export default function DoctorConsultationRoom() {
   const [completed, setCompleted] = useState(false);
   const [tab, setTab] = useState<Tab>('report');
 
+  // Ref to trigger endCall from DoctorVideoRoom when completing
+  const endCallRef = useRef<(() => void) | null>(null);
+
+
   // Referral state
   const [refMode, setRefMode] = useState<'specialist' | 'doctor'>('specialist');
   const [refService, setRefService] = useState('');
@@ -112,6 +116,12 @@ export default function DoctorConsultationRoom() {
 
   const complete = async () => {
     setSaving(true);
+
+    // 1. Send hangup to patient FIRST — gives them a clean disconnect signal
+    try { endCallRef.current?.(); } catch (_) {}
+    // Brief pause so the hangup broadcast can fly out before we navigate away
+    await new Promise(r => setTimeout(r, 400));
+
     const validMeds = meds.filter(m => m.name.trim());
     const res = await fetch('/api/consultations/' + params.id, {
       method: 'PATCH',
@@ -128,8 +138,9 @@ export default function DoctorConsultationRoom() {
 
     setSaving(false);
     setCompleted(true);
-    setTimeout(() => router.push('/doctor/consultations'), 1500);
+    setTimeout(() => router.push('/doctor/consultations'), 1200);
   };
+
 
   const sendReferral = async () => {
     const serviceLabel = refMode === 'doctor'
@@ -215,7 +226,8 @@ export default function DoctorConsultationRoom() {
           </div>
         </div>
         <div className="flex-1 overflow-hidden rounded-xl">
-          <DoctorVideoRoom roomId={params.id as string} patientName={patient.full_name ?? 'Patient'} />
+          <DoctorVideoRoom roomId={params.id as string} patientName={patient.full_name ?? 'Patient'} onEndCallRef={endCallRef} />
+
         </div>
       </div>
 
