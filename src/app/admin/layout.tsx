@@ -111,7 +111,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => setLocale('en')}>English</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setLocale('mr')}>मराठी</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setLocale('hi')}>हिंदी</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setLocale('mr')}>मराठी</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 

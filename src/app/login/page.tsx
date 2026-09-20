@@ -10,11 +10,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { AlertCircle, Loader2 } from 'lucide-react';
 
-const ROLE_SUBTITLES: Record<string, { en: string; mr: string }> = {
-  patient: { en: 'Check symptoms, track referrals, see your record.', mr: 'लक्षणे तपासा, रेफरल ट्रॅक करा.' },
-  asha: { en: 'Register patients, run triage, manage your caseload.', mr: 'रुग्ण नोंदवा, ट्रायज करा.' },
-  doctor: { en: 'Video consultations, prescriptions, referrals.', mr: 'व्हिडिओ सल्ला, प्रिस्क्रिप्शन.' },
-  admin: { en: 'Facility metrics, analytics, district overview.', mr: 'सुविधा मेट्रिक्स, विश्लेषण.' },
+const ROLE_SUBTITLES: Record<string, Record<SupportedLocale, string>> = {
+  patient: { en: 'Check symptoms, track referrals, see your record.', hi: 'लक्षण जांचें, रेफरल ट्रैक करें, रिकॉर्ड देखें।', mr: 'लक्षणे तपासा, रेफरल ट्रॅक करा.' },
+  asha: { en: 'Register patients, run triage, manage your caseload.', hi: 'मरीज़ दर्ज करें, ट्राइज करें, कार्यभार प्रबंधित करें।', mr: 'रुग्ण नोंदवा, ट्रायज करा.' },
+  doctor: { en: 'Video consultations, prescriptions, referrals.', hi: 'वीडियो परामर्श, नुस्खे, रेफरल।', mr: 'व्हिडिओ सल्ला, प्रिस्क्रिप्शन.' },
+  admin: { en: 'Facility metrics, analytics, district overview.', hi: 'सुविधा मेट्रिक्स, विश्लेषण, जिला अवलोकन।', mr: 'सुविधा मेट्रिक्स, विश्लेषण.' },
 };
 
 export default function LoginPage() {

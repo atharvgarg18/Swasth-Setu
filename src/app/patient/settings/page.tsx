@@ -25,6 +25,7 @@ export default function SettingsPage() {
         <CardHeader><CardTitle>{t('patient.settings.language')}</CardTitle></CardHeader>
         <CardContent className="flex gap-4">
           <Button variant={locale === 'en' ? 'default' : 'outline'} onClick={() => setLocale('en')}>English</Button>
+          <Button variant={locale === 'hi' ? 'default' : 'outline'} onClick={() => setLocale('hi')}>हिंदी</Button>
           <Button variant={locale === 'mr' ? 'default' : 'outline'} onClick={() => setLocale('mr')}>मराठी</Button>
         </CardContent>
       </Card>

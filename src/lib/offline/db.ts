@@ -38,7 +38,7 @@ export class OfflineDB extends Dexie {
   mutations!: Table<{ id: string, table: string, operation: string, data: any, timestamp: number }>;
 
   constructor() {
-    super('GraminCareOfflineDB');
+    super('SwasthyaSetuOfflineDB');
     this.version(1).stores({
       patients: 'id, _synced, _lastModified, assigned_worker_id',
       consultations: 'id, patient_id, doctor_id, _synced, _lastModified',

@@ -1,6 +1,6 @@
 {
   "common": {
-    "appName": "Swasth Setu",
+    "appName": "Swasthya Setu",
     "tagline": "One Patient Record. Continuous Care.",
     "loading": "Loading...",
     "error": "Something went wrong",
@@ -57,7 +57,7 @@
     "password": "Password",
     "confirmPassword": "Confirm Password",
     "forgotPassword": "Forgot Password?",
-    "loginTitle": "Welcome to Swasth Setu",
+    "loginTitle": "Welcome to Swasthya Setu",
     "loginSubtitle": "Connecting rural India to quality healthcare",
     "registerTitle": "Create Account",
     "demoAccounts": "Demo Accounts",
@@ -196,7 +196,7 @@
   "doctor": {
     "dashboard": {
       "welcome": "Doctor Portal",
-      "portal": "Swasth Setu Doctor",
+      "portal": "Swasthya Setu Doctor",
       "pending_consultations": "Pending Consultations",
       "today_queue": "Today's Queue",
       "recent_rx": "Recent Prescriptions",

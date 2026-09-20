@@ -1,0 +1,321 @@
+{
+  "common": {
+    "appName": "स्वास्थ्य सेतु",
+    "tagline": "एक मरीज़ रिकॉर्ड। निरंतर देखभाल।",
+    "loading": "लोड हो रहा है...",
+    "error": "कुछ गलत हो गया",
+    "retry": "फिर कोशिश करें",
+    "save": "सहेजें",
+    "saving": "सहेजा जा रहा है...",
+    "cancel": "रद्द करें",
+    "confirm": "पुष्टि करें",
+    "delete": "हटाएं",
+    "edit": "संपादित करें",
+    "view": "देखें",
+    "search": "खोजें",
+    "filter": "फ़िल्टर",
+    "noResults": "कोई परिणाम नहीं मिला",
+    "no_data": "कोई डेटा उपलब्ध नहीं",
+    "noData": "कोई डेटा उपलब्ध नहीं",
+    "back": "वापस",
+    "next": "अगला",
+    "submit": "जमा करें",
+    "close": "बंद करें",
+    "yes": "हाँ",
+    "no": "नहीं",
+    "all": "सभी",
+    "none": "कोई नहीं",
+    "status": "स्थिति",
+    "actions": "कार्रवाई",
+    "details": "विवरण",
+    "date": "तारीख",
+    "time": "समय",
+    "notes": "नोट्स",
+    "name": "नाम",
+    "phone": "फ़ोन",
+    "email": "ईमेल",
+    "address": "पता",
+    "online": "ऑनलाइन",
+    "offline": "ऑफ़लाइन",
+    "connecting": "जोड़ा जा रहा है...",
+    "syncing": "सिंक हो रहा है...",
+    "syncComplete": "सिंक पूर्ण",
+    "pendingSync": "सिंक बाकी है",
+    "male": "पुरुष",
+    "female": "महिला",
+    "other": "अन्य",
+    "years": "वर्ष",
+    "minutes": "मिनट",
+    "view_all": "सभी देखें",
+    "view_details": "विवरण देखें"
+  },
+  "auth": {
+    "login": "लॉगिन",
+    "register": "पंजीकरण",
+    "logout": "लॉगआउट",
+    "email": "ईमेल",
+    "password": "पासवर्ड",
+    "confirmPassword": "पासवर्ड की पुष्टि करें",
+    "forgotPassword": "पासवर्ड भूल गए?",
+    "loginTitle": "स्वास्थ्य सेतु में आपका स्वागत है",
+    "loginSubtitle": "ग्रामीण भारत को गुणवत्तापूर्ण स्वास्थ्य सेवा से जोड़ना",
+    "registerTitle": "खाता बनाएं",
+    "demoAccounts": "डेमो खाते",
+    "loginAs": "इस रूप में लॉगिन करें",
+    "invalidCredentials": "अमान्य ईमेल या पासवर्ड",
+    "sessionExpired": "आपका सत्र समाप्त हो गया है। कृपया फिर से लॉगिन करें।",
+    "sign_out": "साइन आउट"
+  },
+  "patient": {
+    "home": "होम",
+    "record": "स्वास्थ्य रिकॉर्ड",
+    "dashboard": {
+      "welcome": "नमस्ते,",
+      "subtitle": "आपका स्वास्थ्य, हमारी प्राथमिकता",
+      "triage_button": "ट्राइज शुरू करें",
+      "active_referral": "सक्रिय रेफरल"
+    },
+    "nav": {
+      "home": "होम",
+      "health_record": "स्वास्थ्य रिकॉर्ड",
+      "referrals": "रेफरल",
+      "follow_up": "फॉलो-अप",
+      "prescriptions": "नुस्खे",
+      "facilities": "सुविधाएं",
+      "notifications": "सूचनाएं",
+      "more": "अधिक"
+    },
+    "health_record": {
+      "title": "मेरा स्वास्थ्य रिकॉर्ड",
+      "demographics": "व्यक्तिगत जानकारी",
+      "name": "पूरा नाम",
+      "age": "आयु",
+      "gender": "लिंग",
+      "blood_group": "रक्त समूह",
+      "address": "पता",
+      "allergies": "एलर्जी",
+      "conditions": "दीर्घकालिक बीमारियाँ",
+      "timeline": "स्वास्थ्य टाइमलाइन"
+    },
+    "referrals": {
+      "title": "मेरे रेफरल",
+      "source": "से",
+      "destination": "को",
+      "reason": "कारण",
+      "urgency": "तात्कालिकता",
+      "doctor": "रेफर किया गया",
+      "detail": "रेफरल विवरण",
+      "info": "रेफरल जानकारी",
+      "timeline": "स्थिति टाइमलाइन"
+    },
+    "follow_ups": {
+      "title": "मेरे फॉलो-अप",
+      "date": "निर्धारित तारीख",
+      "reason": "कारण",
+      "worker": "आशा कार्यकर्ता"
+    },
+    "prescriptions": {
+      "title": "मेरे नुस्खे",
+      "doctor": "निर्धारित करने वाले",
+      "dosage": "खुराक",
+      "frequency": "आवृत्ति",
+      "duration": "अवधि",
+      "instructions": "निर्देश",
+      "notes": "नोट्स"
+    },
+    "notifications": {
+      "title": "सूचनाएं",
+      "mark_read": "पढ़ा हुआ चिह्नित करें"
+    },
+    "facilities": {
+      "title": "नज़दीकी सुविधाएं",
+      "beds": "बिस्तर",
+      "phone": "संपर्क"
+    },
+    "settings": {
+      "title": "सेटिंग्स",
+      "profile": "मेरी प्रोफ़ाइल",
+      "name": "नाम",
+      "phone": "फ़ोन नंबर",
+      "email": "ईमेल",
+      "language": "भाषा"
+    },
+    "consultation": {
+      "active_call": "सक्रिय परामर्श"
+    }
+  },
+  "asha": {
+    "dashboard": {
+      "title": "आशा डैशबोर्ड",
+      "subtitle": "अपने मरीज़ों और फॉलो-अप का प्रबंधन करें",
+      "recentReferrals": "हाल के रेफरल",
+      "recentReferralsDesc": "आपके मरीज़ों के लिए नवीनतम रेफरल",
+      "viewAllReferrals": "सभी रेफरल देखें",
+      "quickLinks": "त्वरित क्रियाएं"
+    },
+    "stats": {
+      "totalPatients": "कुल मरीज़",
+      "highRisk": "उच्च जोखिम",
+      "pendingFollowUps": "लंबित फॉलो-अप"
+    },
+    "nav": {
+      "patients": "मरीज़",
+      "triage": "ट्राइज",
+      "referrals": "रेफरल",
+      "followUps": "फॉलो-अप",
+      "dashboard": "डैशबोर्ड"
+    },
+    "actions": {
+      "register": "मरीज़ पंजीकृत करें",
+      "triage": "ट्राइज शुरू करें"
+    },
+    "patients": {
+      "title": "मेरे मरीज़",
+      "search": "मरीज़ खोजें...",
+      "register": "नया मरीज़ पंजीकृत करें",
+      "noPatients": "अभी कोई मरीज़ नहीं"
+    },
+    "visit": {
+      "title": "विज़िट दर्ज करें"
+    },
+    "triage": {
+      "title": "मरीज़ ट्राइज",
+      "selectPatient": "मरीज़ चुनें",
+      "selectSymptoms": "लक्षण चुनें",
+      "enterVitals": "वाइटल्स दर्ज करें",
+      "duration": "अवधि",
+      "result": "ट्राइज परिणाम",
+      "selfCare": "स्व-देखभाल",
+      "teleconsult": "टेलीकंसल्टेशन",
+      "phcVisit": "पीएचसी विज़िट",
+      "emergency": "आपातकाल",
+      "durationDays": "लक्षण कितने दिनों से हैं?",
+      "additionalNotes": "अतिरिक्त नोट्स"
+    }
+  },
+  "doctor": {
+    "dashboard": {
+      "welcome": "डॉक्टर पोर्टल",
+      "portal": "स्वास्थ्य सेतु डॉक्टर",
+      "pending_consultations": "लंबित परामर्श",
+      "today_queue": "आज की कतार",
+      "recent_rx": "हाल के नुस्खे",
+      "join": "परामर्श में शामिल हों"
+    },
+    "consultations": {
+      "title": "परामर्श",
+      "queue": "परामर्श कतार",
+      "patient_info": "मरीज़ की जानकारी",
+      "clinical_notes": "क्लिनिकल नोट्स",
+      "assessment": "मूल्यांकन",
+      "prescription": "नुस्खा",
+      "notes": "नोट्स",
+      "add_med": "दवा जोड़ें",
+      "med_name": "दवा का नाम",
+      "med_dosage": "खुराक",
+      "med_freq": "आवृत्ति",
+      "med_dur": "अवधि",
+      "type": "परामर्श प्रकार",
+      "complete": "परामर्श पूर्ण करें",
+      "join_call": "वीडियो कॉल में शामिल हों"
+    },
+    "patients": {
+      "title": "मेरे मरीज़"
+    },
+    "referrals": {
+      "title": "मेरे रेफरल",
+      "destination": "रेफर किया गया",
+      "reason": "कारण"
+    },
+    "nav": {
+      "dashboard": "डैशबोर्ड",
+      "queue": "कतार",
+      "consultations": "परामर्श",
+      "referrals": "रेफरल",
+      "patients": "मरीज़"
+    }
+  },
+  "admin": {
+    "dashboard": "एडमिन डैशबोर्ड",
+    "district_overview": "जिला अवलोकन",
+    "total_patients": "कुल मरीज़",
+    "active_referrals": "सक्रिय रेफरल",
+    "pending_follow_ups": "लंबित फॉलो-अप",
+    "emergencies": "आपातकाल",
+    "stock_alerts": "स्टॉक अलर्ट",
+    "recent_referrals": "हाल के रेफरल",
+    "recent_referrals_desc": "आपके जिले में नवीनतम रेफरल गतिविधि",
+    "recent_emergencies": "हाल की आपात स्थितियां",
+    "recent_emergencies_desc": "आज रिपोर्ट किए गए आपातकालीन मामले",
+    "facilities": "सुविधाएं",
+    "facility_overview": "सुविधा अवलोकन",
+    "referrals_tracking": "रेफरल ट्रैकिंग",
+    "analytics": "विश्लेषण",
+    "nav": {
+      "dashboard": "डैशबोर्ड",
+      "facilities": "सुविधाएं",
+      "referrals": "रेफरल",
+      "analytics": "विश्लेषण"
+    }
+  },
+  "emergency": "आपातकाल",
+  "video": {
+    "connect_to_doctor": "डॉक्टर से कनेक्ट करें",
+    "connecting": "जोड़ा जा रहा है...",
+    "disconnected": "कॉल समाप्त",
+    "end_call": "कॉल समाप्त करें",
+    "ensure_good_lighting": "सर्वोत्तम वीडियो गुणवत्ता के लिए अच्छी रोशनी सुनिश्चित करें",
+    "live": "लाइव",
+    "local_camera_off": "आपका कैमरा बंद है",
+    "patient_camera_off": "मरीज़ का कैमरा बंद है",
+    "ready": "तैयार",
+    "ready_to_connect": "कनेक्ट करने के लिए तैयार",
+    "retry_connection": "फिर से कनेक्ट करें",
+    "start_consultation": "परामर्श शुरू करें",
+    "waiting_for_doctor": "डॉक्टर की प्रतीक्षा है...",
+    "waiting_for_doctor_video": "डॉक्टर के वीडियो की प्रतीक्षा है",
+    "waiting_for_patient": "मरीज़ की प्रतीक्षा है..."
+  },
+  "triage": {
+    "title": "मरीज़ ट्राइज",
+    "step1": "मरीज़ चुनें",
+    "step2": "लक्षण",
+    "step3": "वाइटल साइन्स",
+    "step4": "अवधि",
+    "step5": "परिणाम",
+    "result": {
+      "mild": "सामान्य",
+      "moderate": "मध्यम",
+      "emergency": "आपातकाल"
+    }
+  },
+  "referral": {
+    "status": {
+      "created": "बनाया गया",
+      "pending": "लंबित",
+      "acknowledged": "स्वीकृत",
+      "in_transit": "रास्ते में",
+      "arrived": "पहुंच गए",
+      "in_treatment": "उपचार में",
+      "completed": "पूर्ण",
+      "cancelled": "रद्द",
+      "rejected": "अस्वीकृत",
+      "no_show": "अनुपस्थित"
+    }
+  },
+  "requested": "अनुरोध किया",
+  "queued": "कतार में",
+  "in_progress": "जारी है",
+  "completed": "पूर्ण",
+  "cancelled": "रद्द",
+  "routine": "सामान्य",
+  "urgent": "अत्यावश्यक",
+  "upcoming": "आगामी",
+  "due": "देय",
+  "overdue": "अतिदेय",
+  "missed": "चूक गया",
+  "nav.dashboard": "डैशबोर्ड",
+  "nav.facilities": "सुविधाएं",
+  "nav.referrals": "रेफरल",
+  "nav.analytics": "विश्लेषण"
+}

@@ -3,7 +3,7 @@
  * Change APP_NAME here to rebrand the entire application.
  */
 
-export const APP_NAME = 'Swasth Setu';
+export const APP_NAME = 'Swasthya Setu';
 export const APP_DESCRIPTION = 'Rural Public Healthcare Continuity Platform';
 export const APP_TAGLINE = 'One Patient Record. Continuous Care.';
 
@@ -11,11 +11,12 @@ export const APP_TAGLINE = 'One Patient Record. Continuous Care.';
 export const DEFAULT_LOCALE = 'en';
 
 /** Supported locales */
-export const SUPPORTED_LOCALES = ['en', 'mr'] as const;
+export const SUPPORTED_LOCALES = ['en', 'hi', 'mr'] as const;
 export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
 
 export const LOCALE_NAMES: Record<SupportedLocale, string> = {
   en: 'English',
+  hi: 'हिंदी',
   mr: 'मराठी',
 };
 
@@ -30,13 +31,13 @@ export const USER_ROLES = [
 ] as const;
 export type UserRole = (typeof USER_ROLES)[number];
 
-export const ROLE_LABELS: Record<UserRole, { en: string; mr: string }> = {
-  patient: { en: 'Patient', mr: 'रुग्ण' },
-  asha: { en: 'ASHA Worker', mr: 'आशा कार्यकर्ती' },
-  anm: { en: 'ANM', mr: 'एएनएम' },
-  doctor: { en: 'Doctor', mr: 'डॉक्टर' },
-  facility_admin: { en: 'Facility Admin', mr: 'सुविधा प्रशासक' },
-  district_admin: { en: 'District Admin', mr: 'जिल्हा प्रशासक' },
+export const ROLE_LABELS: Record<UserRole, Record<SupportedLocale, string>> = {
+  patient: { en: 'Patient', hi: 'मरीज़', mr: 'रुग्ण' },
+  asha: { en: 'ASHA Worker', hi: 'आशा कार्यकर्ता', mr: 'आशा कार्यकर्ती' },
+  anm: { en: 'ANM', hi: 'एएनएम', mr: 'एएनएम' },
+  doctor: { en: 'Doctor', hi: 'डॉक्टर', mr: 'डॉक्टर' },
+  facility_admin: { en: 'Facility Admin', hi: 'सुविधा प्रशासक', mr: 'सुविधा प्रशासक' },
+  district_admin: { en: 'District Admin', hi: 'जिल्हा प्रशासक', mr: 'जिल्हा प्रशासक' },
 };
 
 /** Role-based route prefixes */

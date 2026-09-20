@@ -100,6 +100,7 @@ export default function DoctorLayout({ children }: { children: React.ReactNode }
             </DropdownMenuTrigger>
             <DropdownMenuContent side="top" align="start">
               <DropdownMenuItem onClick={() => setLocale('en')}>English</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setLocale('hi')}>हिंदी</DropdownMenuItem>
               <DropdownMenuItem onClick={() => setLocale('mr')}>मराठी</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

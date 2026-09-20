@@ -26,7 +26,7 @@ const SEVERITY_CONFIG: Record<string, { label: string; bg: string; text: string;
   emergency: { label: 'Emergency', bg: 'bg-red-50',    text: 'text-red-800',    border: 'border-red-200',   dot: 'bg-red-500'   },
 };
 
-type Tab = 'report' | 'notes' | 'referral';
+type Tab = 'report' | 'notes' | 'referral' | 'instructions';
 
 export default function DoctorConsultationRoom() {
   const params = useParams();
@@ -43,6 +43,10 @@ export default function DoctorConsultationRoom() {
   const [saving, setSaving] = useState(false);
   const [completed, setCompleted] = useState(false);
   const [tab, setTab] = useState<Tab>('report');
+
+  // Instructions for patient and ASHA worker
+  const [patientInstructions, setPatientInstructions] = useState('');
+  const [ashaInstructions, setAshaInstructions] = useState('');
 
   // Ref to trigger endCall from DoctorVideoRoom when completing
   const endCallRef = useRef<(() => void) | null>(null);
@@ -132,6 +136,8 @@ export default function DoctorConsultationRoom() {
         assessment,
         medications: validMeds,
         doctor_id: user?.id,
+        patient_instructions: patientInstructions || null,
+        asha_instructions: ashaInstructions || null,
       }),
     });
     if (!res.ok) { setSaving(false); return; }
@@ -159,6 +165,9 @@ export default function DoctorConsultationRoom() {
         clinical_summary: assessment || notes,
         patient_id: consultation.patient_id,
         doctor_id: user?.id,
+        referred_to_doctor_id: refMode === 'doctor' ? (selectedDoctor?.id ?? null) : null,
+        patient_instructions: patientInstructions || null,
+        asha_instructions: ashaInstructions || null,
       }),
     });
     setRefSent(true);
@@ -198,10 +207,12 @@ export default function DoctorConsultationRoom() {
   }, {});
 
   const TABS: { id: Tab; label: string; icon: any }[] = [
-    { id: 'report',   label: 'Report',   icon: FileText },
-    { id: 'notes',    label: 'Notes & Rx', icon: ClipboardList },
-    { id: 'referral', label: 'Referral', icon: ArrowRightLeft },
+    { id: 'report',       label: 'Report',       icon: FileText },
+    { id: 'notes',        label: 'Notes & Rx',   icon: ClipboardList },
+    { id: 'referral',     label: 'Referral',     icon: ArrowRightLeft },
+    { id: 'instructions', label: 'Instructions', icon: Send },
   ];
+
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-950">
@@ -653,6 +664,33 @@ export default function DoctorConsultationRoom() {
                 </div>
               )}
 
+            </div>
+          )}
+
+          {/* ── INSTRUCTIONS TAB ─────────────────────────────────────── */}
+          {tab === 'instructions' && (
+            <div className="p-4 space-y-5">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wide text-slate-500 mb-1">Patient Instructions</p>
+                <p className="text-xs text-slate-400 mb-2">What should the patient do? (e.g., "Get CBC blood test", "Visit District Hospital on Monday", "Take rest for 3 days")</p>
+                <Textarea
+                  placeholder="Type instructions for the patient..."
+                  value={patientInstructions}
+                  onChange={e => setPatientInstructions(e.target.value)}
+                  className="min-h-[100px] text-sm"
+                />
+              </div>
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wide text-slate-500 mb-1">ASHA Worker Instructions</p>
+                <p className="text-xs text-slate-400 mb-2">What should the ASHA worker follow up on? (e.g., "Monitor BP weekly for 4 weeks", "Ensure patient completes medication course")</p>
+                <Textarea
+                  placeholder="Type follow-up instructions for the ASHA worker..."
+                  value={ashaInstructions}
+                  onChange={e => setAshaInstructions(e.target.value)}
+                  className="min-h-[100px] text-sm"
+                />
+              </div>
+              <p className="text-xs text-slate-400 text-center">These instructions will be sent as notifications when you complete the consultation.</p>
             </div>
           )}
         </div>

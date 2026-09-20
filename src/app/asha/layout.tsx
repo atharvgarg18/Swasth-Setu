@@ -59,14 +59,14 @@ export default function AshaLayout({ children }: { children: React.ReactNode }) 
             <span>{t('asha.actions.sos', 'Emergency SOS')}</span>
           </Button>
 
-          <Button variant="ghost" size="icon" className="relative" aria-label={t('patient.nav.notifications')}>
+          <Link href="/asha/notifications" className="relative inline-flex items-center justify-center h-9 w-9 rounded-md hover:bg-slate-100 transition-colors" aria-label="Notifications">
             <Bell className="w-5 h-5 text-slate-600" />
             {unreadCount > 0 && (
               <Badge className="absolute -top-1 -right-1 px-1 min-w-[1.25rem] h-5 flex items-center justify-center bg-red-500 text-white rounded-full">
                 {unreadCount}
               </Badge>
             )}
-          </Button>
+          </Link>
 
           <DropdownMenu>
             <DropdownMenuTrigger className="inline-flex items-center justify-center rounded-md text-sm font-medium h-9 w-9 hover:bg-slate-100 hover:text-slate-900 cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" aria-label={t('patient.settings.language')}>
@@ -74,6 +74,7 @@ export default function AshaLayout({ children }: { children: React.ReactNode }) 
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => setLocale('en')}>English</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setLocale('hi')}>हिंदी</DropdownMenuItem>
               <DropdownMenuItem onClick={() => setLocale('mr')}>मराठी</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

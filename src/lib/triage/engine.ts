@@ -1,5 +1,5 @@
 /**
- * Swasth Setu — Rule-Based Triage Engine
+ * Swasthya Setu — Rule-Based Triage Engine
  *
  * IMPORTANT: This engine does NOT diagnose.
  * It routes patients to the appropriate level of care

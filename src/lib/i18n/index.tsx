@@ -4,13 +4,16 @@ import React, { createContext, useContext, useState, useCallback, useEffect } fr
 import { DEFAULT_LOCALE, SUPPORTED_LOCALES, type SupportedLocale } from '@/lib/constants';
 import enMessages from './messages/en.json';
 import mrMessages from './messages/mr.json';
+import hiMessages from './messages/hi.json';
 
 type Messages = typeof enMessages;
 
 const messagesMap: Record<SupportedLocale, Messages> = {
   en: enMessages,
-  mr: mrMessages,
+  hi: hiMessages as unknown as Messages,
+  mr: mrMessages as unknown as Messages,
 };
+
 
 interface I18nContextValue {
   locale: SupportedLocale;
@@ -54,7 +57,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
 
   // Load saved locale from localStorage on mount
   useEffect(() => {
-    const saved = localStorage.getItem('gramincare-locale');
+    const saved = localStorage.getItem('swasthyasetu-locale');
     if (saved && SUPPORTED_LOCALES.includes(saved as SupportedLocale)) {
       setLocaleState(saved as SupportedLocale);
     }
@@ -62,7 +65,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
 
   const setLocale = useCallback((newLocale: SupportedLocale) => {
     setLocaleState(newLocale);
-    localStorage.setItem('gramincare-locale', newLocale);
+    localStorage.setItem('swasthyasetu-locale', newLocale);
     // Update document lang attribute
     document.documentElement.lang = newLocale;
   }, []);

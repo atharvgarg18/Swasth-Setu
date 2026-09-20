@@ -85,6 +85,7 @@ export default function PatientLayout({ children }: { children: React.ReactNode 
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-28">
               <DropdownMenuItem onClick={() => setLocale('en')}>English</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setLocale('hi')}>हिंदी</DropdownMenuItem>
               <DropdownMenuItem onClick={() => setLocale('mr')}>मराठी</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
