@@ -1,18 +1,29 @@
 import { NextResponse } from 'next/server';
 
-const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID!;
-const TWILIO_AUTH_TOKEN  = process.env.TWILIO_AUTH_TOKEN!;
-const TWILIO_FROM        = process.env.TWILIO_FROM_NUMBER!;
-const TWILIO_DEMO_TO     = process.env.TWILIO_DEMO_TO_NUMBER!;
-const INTERNAL_KEY       = process.env.CRON_INTERNAL_KEY ?? 'swasthya-setu-cron';
+const FAST2SMS_API_KEY  = process.env.FAST2SMS_API_KEY!;
+const DEMO_TO_NUMBER    = process.env.TWILIO_DEMO_TO_NUMBER ?? '';  // +917723840916
+const INTERNAL_KEY      = process.env.CRON_INTERNAL_KEY ?? 'swasthya-setu-cron';
+
+/**
+ * Strips country code and returns 10-digit Indian mobile number
+ * +917723840916 → 7723840916
+ * 917723840916  → 7723840916
+ * 7723840916    → 7723840916
+ */
+function to10Digit(phone: string): string {
+  const digits = phone.replace(/\D/g, '');            // remove non-digits
+  if (digits.length === 12 && digits.startsWith('91')) return digits.slice(2);
+  if (digits.length === 11 && digits.startsWith('0'))  return digits.slice(1);
+  return digits.slice(-10);                            // take last 10 digits
+}
 
 /**
  * POST /api/no-show/send-sms
- * Called by pg_net (from escalate_no_show_referrals pg_cron function)
- * Sends a real Twilio SMS to the ASHA worker's phone.
+ * Called by pg_net from escalate_no_show_referrals() pg_cron function.
+ * Sends real SMS via Fast2SMS quick route (no DLT required).
  */
 export async function POST(request: Request) {
-  // Verify internal key so only our pg_cron can call this
+  // Verify internal key
   const key = request.headers.get('x-internal-key');
   if (key !== INTERNAL_KEY) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -31,58 +42,61 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'message is required' }, { status: 400 });
   }
 
-  // On free trial: always send to verified demo number
-  // On production: use actual asha_phone
-  const toNumber = TWILIO_DEMO_TO || asha_phone;
+  // Use demo number (verified) for trial; in production use actual asha_phone
+  const rawPhone  = DEMO_TO_NUMBER || asha_phone || '';
+  const phone10   = to10Digit(rawPhone);
+
+  if (phone10.length !== 10) {
+    console.error('[Fast2SMS] Invalid phone number:', rawPhone, '→', phone10);
+    return NextResponse.json({ error: 'Invalid phone number' }, { status: 400 });
+  }
+
+  console.log(`[Fast2SMS] Sending SMS | to=${phone10} | referral=${referral_id}`);
+  console.log(`[Fast2SMS] Message: ${message}`);
 
   try {
-    // Call Twilio REST API directly (no SDK needed)
-    const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`;
-
-    // WhatsApp sandbox — bypasses India DLT requirement entirely
-    // To join sandbox: send "join <word-word>" to whatsapp:+14155238886
-    const whatsappTo   = `whatsapp:${toNumber}`;
-    const whatsappFrom = `whatsapp:+14155238886`; // Twilio WhatsApp sandbox number
-
+    // Fast2SMS quick route — transactional, no DLT required
     const params = new URLSearchParams({
-      To:   whatsappTo,
-      From: whatsappFrom,
-      Body: message,
+      route:    'q',
+      message:  message,
+      language: 'english',
+      flash:    '0',
+      numbers:  phone10,
     });
 
-    const credentials = Buffer.from(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`).toString('base64');
-
-    const res = await fetch(twilioUrl, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Basic ${credentials}`,
-        'Content-Type':  'application/x-www-form-urlencoded',
-      },
-      body: params.toString(),
-    });
+    const res = await fetch(
+      `https://www.fast2sms.com/dev/bulkV2?${params.toString()}`,
+      {
+        method: 'GET',
+        headers: {
+          authorization: FAST2SMS_API_KEY,
+          'Cache-Control': 'no-cache',
+        },
+      }
+    );
 
     const result = await res.json();
 
-    if (!res.ok) {
-      console.error('[Twilio WhatsApp] Error:', result);
+    if (!res.ok || result.return === false) {
+      console.error('[Fast2SMS] Error:', result);
       return NextResponse.json({
-        success: false,
-        error: result.message ?? 'Twilio error',
-        twilio_code: result.code,
+        success:      false,
+        error:        result.message?.[0] ?? 'Fast2SMS error',
+        fast2sms_res: result,
       }, { status: 500 });
     }
 
-    console.log(`[Twilio WhatsApp] Message sent | sid=${result.sid} | to=${whatsappTo} | referral=${referral_id}`);
+    console.log(`[Fast2SMS] ✅ SMS sent | request_id=${result.request_id} | to=${phone10}`);
 
     return NextResponse.json({
-      success: true,
-      sms_sid: result.sid,
-      to: toNumber,
-      status: result.status,
+      success:    true,
+      request_id: result.request_id,
+      to:         phone10,
+      provider:   'Fast2SMS',
     });
 
   } catch (err: any) {
-    console.error('[Twilio] Network error:', err);
+    console.error('[Fast2SMS] Network error:', err);
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
 }
