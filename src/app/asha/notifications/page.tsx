@@ -2,17 +2,18 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/lib/auth/provider';
 import { createClient } from '@/lib/supabase/client';
-import { Loader2, Bell, Check } from 'lucide-react';
+import { Loader2, Bell, Check, AlertTriangle } from 'lucide-react';
 
-const TYPE_STYLE: Record<string, { bg: string; text: string; icon: string }> = {
-  referral_created: { bg: 'bg-blue-50', text: 'text-blue-700', icon: '📋' },
-  referral_acknowledged: { bg: 'bg-indigo-50', text: 'text-indigo-700', icon: '👨‍⚕️' },
-  referral_status_update: { bg: 'bg-yellow-50', text: 'text-yellow-700', icon: '🔄' },
-  referral_completed: { bg: 'bg-green-50', text: 'text-green-700', icon: '✅' },
-  referral_incoming: { bg: 'bg-purple-50', text: 'text-purple-700', icon: '🔀' },
-  consultation_completed: { bg: 'bg-emerald-50', text: 'text-emerald-700', icon: '✅' },
-  follow_up_reminder: { bg: 'bg-orange-50', text: 'text-orange-700', icon: '⏰' },
-  general: { bg: 'bg-slate-50', text: 'text-slate-700', icon: '🔔' },
+const TYPE_STYLE: Record<string, { bg: string; text: string; icon: string; urgent?: boolean }> = {
+  no_show:               { bg: 'bg-red-50',     text: 'text-red-700',     icon: '🚨', urgent: true },
+  referral_created:      { bg: 'bg-blue-50',    text: 'text-blue-700',    icon: '📋' },
+  referral_acknowledged: { bg: 'bg-indigo-50',  text: 'text-indigo-700',  icon: '👨‍⚕️' },
+  referral_status_update:{ bg: 'bg-yellow-50',  text: 'text-yellow-700',  icon: '🔄' },
+  referral_completed:    { bg: 'bg-green-50',   text: 'text-green-700',   icon: '✅' },
+  referral_incoming:     { bg: 'bg-purple-50',  text: 'text-purple-700',  icon: '🔀' },
+  consultation_completed:{ bg: 'bg-emerald-50', text: 'text-emerald-700', icon: '✅' },
+  follow_up_reminder:    { bg: 'bg-orange-50',  text: 'text-orange-700',  icon: '⏰' },
+  general:               { bg: 'bg-slate-50',   text: 'text-slate-700',   icon: '🔔' },
 };
 
 function timeAgo(dateStr: string) {
@@ -93,21 +94,50 @@ export default function AshaNotifications() {
           <div className="space-y-2">
             {notifications.map(n => {
               const style = TYPE_STYLE[n.type] ?? TYPE_STYLE.general;
+              const isNoShow = n.type === 'no_show';
               return (
                 <div
                   key={n.id}
-                  className={`rounded-xl p-4 border ${n.is_read ? 'opacity-60' : ''}`}
-                  style={{ backgroundColor: 'white', borderColor: n.is_read ? 'oklch(0.88 0.014 80)' : 'oklch(0.37 0.09 158)', borderWidth: n.is_read ? 1 : 1.5 }}
+                  className={`rounded-xl border overflow-hidden ${n.is_read ? 'opacity-60' : ''}`}
+                  style={{
+                    backgroundColor: 'white',
+                    borderColor: isNoShow ? '#ef4444' : n.is_read ? 'oklch(0.88 0.014 80)' : 'oklch(0.37 0.09 158)',
+                    borderWidth: isNoShow ? 2 : 1.5,
+                  }}
                 >
-                  <div className="flex gap-3 items-start">
-                    <span className="text-xl flex-shrink-0">{style.icon}</span>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2">
-                        <p className="text-sm font-bold" style={{ color: 'oklch(0.15 0.012 60)' }}>{n.title}</p>
-                        {!n.is_read && <div className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0 mt-1" />}
+                  {/* Urgent no-show banner */}
+                  {isNoShow && (
+                    <div className="flex items-center gap-2 bg-red-600 px-3 py-1.5">
+                      <AlertTriangle className="w-3.5 h-3.5 text-white animate-pulse flex-shrink-0" />
+                      <span className="text-white text-[11px] font-bold uppercase tracking-wide">
+                        No-Show Escalation — Physical Follow-Up Required
+                      </span>
+                      <span className="ml-auto text-[10px] text-red-200 font-mono">NHM-SMS-GW-v2 · SIMULATED</span>
+                    </div>
+                  )}
+                  <div className="p-4">
+                    <div className="flex gap-3 items-start">
+                      <span className="text-xl flex-shrink-0">{style.icon}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="text-sm font-bold" style={{ color: isNoShow ? '#b91c1c' : 'oklch(0.15 0.012 60)' }}>{n.title}</p>
+                          {!n.is_read && <div className={`w-2 h-2 rounded-full flex-shrink-0 mt-1 ${isNoShow ? 'bg-red-500 animate-pulse' : 'bg-green-500'}`} />}
+                        </div>
+                        <p className="text-xs mt-0.5 leading-relaxed" style={{ color: 'oklch(0.40 0.012 60)' }}>{n.message}</p>
+                        {/* SMS payload preview for no_show */}
+                        {isNoShow && n.data?.sms_payload && (
+                          <div className="mt-2 bg-slate-900 rounded-lg px-3 py-2">
+                            <p className="text-[9px] text-slate-400 font-mono uppercase mb-1">SMS Payload routed to ASHA</p>
+                            <p className="text-[11px] text-green-400 font-mono leading-relaxed">
+                              {n.data.sms_payload.message}
+                            </p>
+                            <p className="text-[9px] text-slate-500 font-mono mt-1">
+                              TO: {n.data.sms_payload.to} · PRIORITY: {n.data.sms_payload.priority} · {n.data.sms_payload.gateway}
+                            </p>
+                          </div>
+                        )}
+                        <p className="text-xs mt-1.5" style={{ color: 'oklch(0.65 0.01 60)' }}>{timeAgo(n.created_at)}</p>
                       </div>
-                      <p className="text-xs mt-0.5 leading-relaxed" style={{ color: 'oklch(0.40 0.012 60)' }}>{n.message}</p>
-                      <p className="text-xs mt-1.5" style={{ color: 'oklch(0.65 0.01 60)' }}>{timeAgo(n.created_at)}</p>
                     </div>
                   </div>
                 </div>

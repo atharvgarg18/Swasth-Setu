@@ -33,6 +33,7 @@ const navItems = [
   { icon: Building2, labelKey: 'admin.nav.facilities', path: '/admin/facilities' },
   { icon: ArrowRightLeft, labelKey: 'admin.nav.referrals', path: '/admin/referrals' },
   { icon: BarChart3, labelKey: 'admin.nav.analytics', path: '/admin/analytics' },
+  { icon: Bell, labelKey: 'No-Show Engine', path: '/admin/no-show-logs' },
 ]
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
