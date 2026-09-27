@@ -39,9 +39,14 @@ export async function POST(request: Request) {
     // Call Twilio REST API directly (no SDK needed)
     const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`;
 
+    // WhatsApp sandbox — bypasses India DLT requirement entirely
+    // To join sandbox: send "join <word-word>" to whatsapp:+14155238886
+    const whatsappTo   = `whatsapp:${toNumber}`;
+    const whatsappFrom = `whatsapp:+14155238886`; // Twilio WhatsApp sandbox number
+
     const params = new URLSearchParams({
-      To:   toNumber,
-      From: TWILIO_FROM,
+      To:   whatsappTo,
+      From: whatsappFrom,
       Body: message,
     });
 
@@ -59,7 +64,7 @@ export async function POST(request: Request) {
     const result = await res.json();
 
     if (!res.ok) {
-      console.error('[Twilio] Error:', result);
+      console.error('[Twilio WhatsApp] Error:', result);
       return NextResponse.json({
         success: false,
         error: result.message ?? 'Twilio error',
@@ -67,7 +72,7 @@ export async function POST(request: Request) {
       }, { status: 500 });
     }
 
-    console.log(`[Twilio] SMS sent | sid=${result.sid} | to=${toNumber} | referral=${referral_id}`);
+    console.log(`[Twilio WhatsApp] Message sent | sid=${result.sid} | to=${whatsappTo} | referral=${referral_id}`);
 
     return NextResponse.json({
       success: true,
