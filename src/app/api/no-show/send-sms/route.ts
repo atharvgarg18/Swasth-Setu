@@ -1,26 +1,23 @@
 import { NextResponse } from 'next/server';
 
-const FAST2SMS_API_KEY  = process.env.FAST2SMS_API_KEY!;
-const DEMO_TO_NUMBER    = process.env.TWILIO_DEMO_TO_NUMBER ?? '';  // +917723840916
-const INTERNAL_KEY      = process.env.CRON_INTERNAL_KEY ?? 'swasthya-setu-cron';
+const DEMO_TO_NUMBER = process.env.TWILIO_DEMO_TO_NUMBER ?? '';  // +917723840916
+const INTERNAL_KEY   = process.env.CRON_INTERNAL_KEY ?? 'swasthya-setu-cron';
 
 /**
- * Strips country code and returns 10-digit Indian mobile number
+ * Strips country code → 10-digit Indian mobile number
  * +917723840916 → 7723840916
- * 917723840916  → 7723840916
- * 7723840916    → 7723840916
  */
 function to10Digit(phone: string): string {
-  const digits = phone.replace(/\D/g, '');            // remove non-digits
+  const digits = phone.replace(/\D/g, '');
   if (digits.length === 12 && digits.startsWith('91')) return digits.slice(2);
   if (digits.length === 11 && digits.startsWith('0'))  return digits.slice(1);
-  return digits.slice(-10);                            // take last 10 digits
+  return digits.slice(-10);
 }
 
 /**
  * POST /api/no-show/send-sms
  * Called by pg_net from escalate_no_show_referrals() pg_cron function.
- * Sends real SMS via Fast2SMS quick route (no DLT required).
+ * Sends real SMS via Textbelt (free tier: 1/day, no signup required).
  */
 export async function POST(request: Request) {
   // Verify internal key
@@ -37,66 +34,57 @@ export async function POST(request: Request) {
   }
 
   const { message, referral_id, asha_phone } = body;
-
   if (!message) {
     return NextResponse.json({ error: 'message is required' }, { status: 400 });
   }
 
-  // Use demo number (verified) for trial; in production use actual asha_phone
-  const rawPhone  = DEMO_TO_NUMBER || asha_phone || '';
-  const phone10   = to10Digit(rawPhone);
+  const rawPhone = DEMO_TO_NUMBER || asha_phone || '';
+  const phone10  = to10Digit(rawPhone);
 
   if (phone10.length !== 10) {
-    console.error('[Fast2SMS] Invalid phone number:', rawPhone, '→', phone10);
-    return NextResponse.json({ error: 'Invalid phone number' }, { status: 400 });
+    return NextResponse.json({ error: `Invalid phone: ${rawPhone}` }, { status: 400 });
   }
 
-  console.log(`[Fast2SMS] Sending SMS | to=${phone10} | referral=${referral_id}`);
-  console.log(`[Fast2SMS] Message: ${message}`);
+  // Textbelt format for Indian numbers: prefix with 91
+  const phoneForTextbelt = `91${phone10}`;
+
+  console.log(`[Textbelt] Sending SMS | to=${phoneForTextbelt} | referral=${referral_id}`);
 
   try {
-    // Fast2SMS quick route — transactional, no DLT required
-    const params = new URLSearchParams({
-      route:    'q',
-      message:  message,
-      language: 'english',
-      flash:    '0',
-      numbers:  phone10,
+    const res = await fetch('https://textbelt.com/text', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        phone:   phoneForTextbelt,
+        message: message,
+        key:     'textbelt',          // free tier: 1 SMS per day
+      }),
     });
 
-    const res = await fetch(
-      `https://www.fast2sms.com/dev/bulkV2?${params.toString()}`,
-      {
-        method: 'GET',
-        headers: {
-          authorization: FAST2SMS_API_KEY,
-          'Cache-Control': 'no-cache',
-        },
-      }
-    );
-
     const result = await res.json();
+    console.log('[Textbelt] Response:', JSON.stringify(result));
 
-    if (!res.ok || result.return === false) {
-      console.error('[Fast2SMS] Error:', result);
+    if (!result.success) {
+      console.error('[Textbelt] Failed:', result.error);
       return NextResponse.json({
-        success:      false,
-        error:        result.message?.[0] ?? 'Fast2SMS error',
-        fast2sms_res: result,
+        success: false,
+        error:   result.error ?? 'Textbelt error',
+        quota:   result.quotaRemaining,
       }, { status: 500 });
     }
 
-    console.log(`[Fast2SMS] ✅ SMS sent | request_id=${result.request_id} | to=${phone10}`);
+    console.log(`[Textbelt] ✅ SMS sent | textId=${result.textId} | quota=${result.quotaRemaining}`);
 
     return NextResponse.json({
-      success:    true,
-      request_id: result.request_id,
-      to:         phone10,
-      provider:   'Fast2SMS',
+      success:  true,
+      text_id:  result.textId,
+      to:       phoneForTextbelt,
+      quota:    result.quotaRemaining,
+      provider: 'Textbelt',
     });
 
   } catch (err: any) {
-    console.error('[Fast2SMS] Network error:', err);
+    console.error('[Textbelt] Network error:', err);
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
 }
