@@ -43,7 +43,8 @@ export async function updateSession(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
   // Public routes that don't require auth
-  const publicRoutes = ['/login', '/register', '/api/auth'];
+  // /api/no-show is protected by x-internal-key header, not cookies
+  const publicRoutes = ['/login', '/register', '/api/auth', '/api/no-show'];
   const isPublicRoute = publicRoutes.some((route) => pathname.startsWith(route));
   const isStaticAsset = pathname.startsWith('/_next') || pathname.startsWith('/icons') || pathname === '/manifest.webmanifest' || pathname === '/sw.js';
 
