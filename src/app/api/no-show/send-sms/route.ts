@@ -1,12 +1,10 @@
 import { NextResponse } from 'next/server';
 
-const DEMO_TO_NUMBER = process.env.TWILIO_DEMO_TO_NUMBER ?? '';  // +917723840916
-const INTERNAL_KEY   = process.env.CRON_INTERNAL_KEY ?? 'swasthya-setu-cron';
+const VONAGE_API_KEY    = process.env.VONAGE_API_KEY!;
+const VONAGE_API_SECRET = process.env.VONAGE_API_SECRET!;
+const DEMO_TO_NUMBER    = process.env.TWILIO_DEMO_TO_NUMBER ?? ''; // +917723840916
+const INTERNAL_KEY      = process.env.CRON_INTERNAL_KEY ?? 'swasthya-setu-cron';
 
-/**
- * Strips country code → 10-digit Indian mobile number
- * +917723840916 → 7723840916
- */
 function to10Digit(phone: string): string {
   const digits = phone.replace(/\D/g, '');
   if (digits.length === 12 && digits.startsWith('91')) return digits.slice(2);
@@ -17,74 +15,69 @@ function to10Digit(phone: string): string {
 /**
  * POST /api/no-show/send-sms
  * Called by pg_net from escalate_no_show_referrals() pg_cron function.
- * Sends real SMS via Textbelt (free tier: 1/day, no signup required).
+ * Sends real SMS via Vonage (Nexmo) — international route, bypasses India DLT.
  */
 export async function POST(request: Request) {
-  // Verify internal key
   const key = request.headers.get('x-internal-key');
   if (key !== INTERNAL_KEY) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   let body: any;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
-  }
+  try { body = await request.json(); }
+  catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }
 
   const { message, referral_id, asha_phone } = body;
-  if (!message) {
-    return NextResponse.json({ error: 'message is required' }, { status: 400 });
-  }
+  if (!message) return NextResponse.json({ error: 'message required' }, { status: 400 });
 
   const rawPhone = DEMO_TO_NUMBER || asha_phone || '';
   const phone10  = to10Digit(rawPhone);
-
   if (phone10.length !== 10) {
     return NextResponse.json({ error: `Invalid phone: ${rawPhone}` }, { status: 400 });
   }
 
-  // Textbelt format for Indian numbers: prefix with 91
-  const phoneForTextbelt = `91${phone10}`;
+  const toNumber = `91${phone10}`; // Vonage format for India: 91XXXXXXXXXX
 
-  console.log(`[Textbelt] Sending SMS | to=${phoneForTextbelt} | referral=${referral_id}`);
+  console.log(`[Vonage] Sending SMS | to=${toNumber} | referral=${referral_id}`);
 
   try {
-    const res = await fetch('https://textbelt.com/text', {
+    const res = await fetch('https://rest.nexmo.com/sms/json', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        phone:   phoneForTextbelt,
-        message: message,
-        key:     'textbelt',          // free tier: 1 SMS per day
+        api_key:    VONAGE_API_KEY,
+        api_secret: VONAGE_API_SECRET,
+        to:         toNumber,
+        from:       'SwasthSetu',
+        text:       message,
       }),
     });
 
     const result = await res.json();
-    console.log('[Textbelt] Response:', JSON.stringify(result));
+    const msg    = result.messages?.[0];
 
-    if (!result.success) {
-      console.error('[Textbelt] Failed:', result.error);
+    if (!res.ok || msg?.status !== '0') {
+      console.error('[Vonage] Error:', result);
       return NextResponse.json({
-        success: false,
-        error:   result.error ?? 'Textbelt error',
-        quota:   result.quotaRemaining,
+        success:      false,
+        error:        msg?.['error-text'] ?? 'Vonage error',
+        status:       msg?.status,
+        vonage_res:   result,
       }, { status: 500 });
     }
 
-    console.log(`[Textbelt] ✅ SMS sent | textId=${result.textId} | quota=${result.quotaRemaining}`);
+    console.log(`[Vonage] ✅ SMS sent | message-id=${msg['message-id']} | to=${toNumber}`);
 
     return NextResponse.json({
-      success:  true,
-      text_id:  result.textId,
-      to:       phoneForTextbelt,
-      quota:    result.quotaRemaining,
-      provider: 'Textbelt',
+      success:    true,
+      message_id: msg['message-id'],
+      to:         toNumber,
+      remaining:  msg['remaining-balance'],
+      provider:   'Vonage',
     });
 
   } catch (err: any) {
-    console.error('[Textbelt] Network error:', err);
+    console.error('[Vonage] Network error:', err);
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
 }
