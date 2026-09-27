@@ -79,7 +79,8 @@ export async function PATCH(
   if (action === 'referral') {
     const {
       service, urgency, reason, clinical_summary, patient_id,
-      referred_to_doctor_id, patient_instructions, asha_instructions,
+      referred_to_doctor_id, destination_facility_id,
+      patient_instructions, asha_instructions,
     } = body;
 
     const { data: ref, error } = await adminClient.from('referrals').insert({
@@ -87,6 +88,7 @@ export async function PATCH(
       patient_id,
       referred_by: doctor_id,
       referred_to_doctor_id: referred_to_doctor_id || null,
+      destination_facility_id: destination_facility_id || null,
       service,
       urgency: urgency || 'routine',
       reason,

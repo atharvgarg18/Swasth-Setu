@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/provider';
 import { createClient } from '@/lib/supabase/client';
@@ -12,8 +12,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import {
   Loader2, CheckCircle, Plus, Heart, AlertTriangle,
   ClipboardList, FileText, Pill, Send, ArrowRightLeft,
-  User, Activity, Stethoscope,
+  User, Activity, Stethoscope, Building2, X, ShieldAlert,
+  ShieldCheck, AlertCircle, Beaker,
 } from 'lucide-react';
+import { SPECIALIST_RESOURCES, FACILITY_TYPE_SHORT } from '@/lib/specialist-resources';
 
 function calcAge(dob: string | null) {
   if (!dob) return '—';
@@ -65,6 +67,15 @@ export default function DoctorConsultationRoom() {
   const [doctorsLoading, setDoctorsLoading] = useState(false);
   const [selectedDoctor, setSelectedDoctor] = useState<{ id: string; full_name: string; specialty: string } | null>(null);
 
+  // Facility selection & validation
+  const [facilities, setFacilities] = useState<any[]>([]);
+  const [facilitiesLoading, setFacilitiesLoading] = useState(false);
+  const [selectedFacility, setSelectedFacility] = useState<any>(null);
+  const [requiredDiags, setRequiredDiags] = useState<string[]>([]);
+  const [requiredMeds, setRequiredMeds] = useState<string[]>([]);
+  const [validation, setValidation] = useState<any>(null);
+  const [validating, setValidating] = useState(false);
+  const [overrideWarning, setOverrideWarning] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -118,6 +129,73 @@ export default function DoctorConsultationRoom() {
     setDoctorsLoading(false);
   };
 
+  // Fetch eligible facilities (PHC and above)
+  const loadFacilities = useCallback(async () => {
+    if (facilities.length > 0) return;
+    setFacilitiesLoading(true);
+    try {
+      const res = await fetch('/api/facilities');
+      if (res.ok) {
+        const json = await res.json();
+        // Filter: PHC and above for specialist referrals
+        const eligible = (json.data ?? []).filter((f: any) =>
+          f.type !== 'sub_centre'
+        );
+        setFacilities(eligible);
+      }
+    } catch (_) {}
+    setFacilitiesLoading(false);
+  }, [facilities.length]);
+
+  // Auto-populate required resources when specialist type changes
+  const onSpecialistChange = (specialist: string | null) => {
+    if (!specialist) return;
+    setRefService(specialist);
+    const res = SPECIALIST_RESOURCES[specialist];
+    if (res) {
+      setRequiredDiags(res.diagnostics);
+      setRequiredMeds(res.medications);
+    } else {
+      setRequiredDiags([]);
+      setRequiredMeds([]);
+    }
+    // Reset validation when specialist changes
+    setValidation(null);
+    setOverrideWarning(false);
+    // Load facilities
+    loadFacilities();
+  };
+
+  // Validate facility resources
+  const validateFacility = useCallback(async (facId: string, diags: string[], meds: string[]) => {
+    if (!facId) return;
+    if (diags.length === 0 && meds.length === 0) {
+      setValidation({ pass: true, diagnostics: [], medications: [], warnings: [], suggestion: null, suggested_facility: null });
+      return;
+    }
+    setValidating(true);
+    setOverrideWarning(false);
+    try {
+      const params = new URLSearchParams({ facility_id: facId });
+      if (diags.length > 0) params.set('diagnostics', diags.join(','));
+      if (meds.length > 0) params.set('medications', meds.join(','));
+      const res = await fetch('/api/referrals/validate?' + params.toString());
+      if (res.ok) {
+        const json = await res.json();
+        setValidation(json.validation);
+      }
+    } catch (_) {}
+    setValidating(false);
+  }, []);
+
+  // When facility is selected, auto-validate
+  const onFacilitySelect = (fac: any) => {
+    setSelectedFacility(fac);
+    setValidation(null);
+    setOverrideWarning(false);
+    validateFacility(fac.id, requiredDiags, requiredMeds);
+  };
+
   const complete = async () => {
     setSaving(true);
 
@@ -166,6 +244,7 @@ export default function DoctorConsultationRoom() {
         patient_id: consultation.patient_id,
         doctor_id: user?.id,
         referred_to_doctor_id: refMode === 'doctor' ? (selectedDoctor?.id ?? null) : null,
+        destination_facility_id: selectedFacility?.id ?? null,
         patient_instructions: patientInstructions || null,
         asha_instructions: ashaInstructions || null,
       }),
@@ -540,22 +619,172 @@ export default function DoctorConsultationRoom() {
 
                   {/* ── Specialist mode ── */}
                   {refMode === 'specialist' && (
-                    <div>
-                      <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1.5">Specialist Type</label>
-                      <Select value={refService} onValueChange={v => setRefService(v ?? '')}>
-                        <SelectTrigger className="text-sm border-slate-200">
-                          <SelectValue placeholder="Select specialist..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {[
-                            'Cardiologist', 'Gynecologist / Obstetrician', 'Orthopedic Surgeon',
-                            'Pediatrician', 'Neurologist', 'Dermatologist', 'ENT Specialist',
-                            'Ophthalmologist', 'Psychiatrist / Psychologist', 'General Surgeon',
-                            'Oncologist', 'Endocrinologist', 'Pulmonologist', 'Nephrologist',
-                            'Gastroenterologist', 'Rheumatologist',
-                          ].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
+                    <div className="space-y-3">
+
+                      {/* Specialist type selector */}
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1.5">Specialist Type</label>
+                        <Select value={refService} onValueChange={onSpecialistChange}>
+                          <SelectTrigger className="text-sm border-slate-200">
+                            <SelectValue placeholder="Select specialist..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Object.keys(SPECIALIST_RESOURCES).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Required resource pills */}
+                      {refService && (requiredDiags.length > 0 || requiredMeds.length > 0) && (
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1.5">
+                            Required Resources <span className="font-normal normal-case">(auto-filled, tap × to remove)</span>
+                          </label>
+                          <div className="flex flex-wrap gap-1.5">
+                            {requiredDiags.map(d => (
+                              <span key={'d-' + d} className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                                <Beaker className="w-2.5 h-2.5" />{d}
+                                <button onClick={() => { setRequiredDiags(prev => prev.filter(x => x !== d)); setValidation(null); }} className="hover:text-red-500 ml-0.5"><X className="w-2.5 h-2.5" /></button>
+                              </span>
+                            ))}
+                            {requiredMeds.map(m => (
+                              <span key={'m-' + m} className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                                <Pill className="w-2.5 h-2.5" />{m}
+                                <button onClick={() => { setRequiredMeds(prev => prev.filter(x => x !== m)); setValidation(null); }} className="hover:text-red-500 ml-0.5"><X className="w-2.5 h-2.5" /></button>
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Facility selector */}
+                      {refService && (
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1.5">
+                            <Building2 className="w-3 h-3 inline mr-1" />Destination Facility
+                          </label>
+                          {facilitiesLoading ? (
+                            <div className="flex justify-center py-3"><Loader2 className="w-4 h-4 animate-spin text-slate-400" /></div>
+                          ) : facilities.length === 0 ? (
+                            <p className="text-xs text-slate-400 italic py-2">No eligible facilities found.</p>
+                          ) : (
+                            <div className="space-y-1.5 max-h-[160px] overflow-y-auto pr-1">
+                              {facilities.map(fac => {
+                                const isSelected = selectedFacility?.id === fac.id;
+                                const typeLabel = FACILITY_TYPE_SHORT[fac.type] ?? fac.type;
+                                return (
+                                  <button
+                                    key={fac.id}
+                                    onClick={() => onFacilitySelect(fac)}
+                                    className={`w-full text-left px-3 py-2.5 rounded-xl border-2 transition-all flex items-center gap-2 ${
+                                      isSelected
+                                        ? 'border-purple-400 bg-purple-50'
+                                        : 'border-slate-100 bg-slate-50/50 hover:border-slate-200'
+                                    }`}
+                                  >
+                                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
+                                      isSelected ? 'bg-purple-200 text-purple-700' : 'bg-slate-200 text-slate-600'
+                                    }`}>{typeLabel}</span>
+                                    <span className="text-xs font-semibold flex-1 truncate" style={{ color: 'oklch(0.20 0.012 60)' }}>{fac.name}</span>
+                                    {isSelected && <CheckCircle className="w-4 h-4 text-purple-600 flex-shrink-0" />}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Validation results */}
+                      {validating && (
+                        <div className="flex items-center gap-2 py-2">
+                          <Loader2 className="w-3.5 h-3.5 animate-spin text-purple-500" />
+                          <span className="text-xs text-slate-500">Validating facility resources...</span>
+                        </div>
+                      )}
+
+                      {validation && !validating && (
+                        <div className={`rounded-xl border-2 p-3 space-y-2 ${
+                          validation.pass
+                            ? 'border-green-200 bg-green-50/50'
+                            : 'border-red-200 bg-red-50/50'
+                        }`}>
+                          {/* Header */}
+                          <div className="flex items-center gap-2">
+                            {validation.pass
+                              ? <><ShieldCheck className="w-4 h-4 text-green-600" /><span className="text-xs font-bold text-green-700">All required resources available</span></>
+                              : <><ShieldAlert className="w-4 h-4 text-red-600" /><span className="text-xs font-bold text-red-700">Resource gaps detected</span></>
+                            }
+                          </div>
+
+                          {/* Per-item results */}
+                          <div className="space-y-1">
+                            {validation.diagnostics?.map((d: any) => (
+                              <div key={d.name} className="flex items-center gap-1.5 text-[11px]">
+                                {d.status === 'available'
+                                  ? <CheckCircle className="w-3 h-3 text-green-500 flex-shrink-0" />
+                                  : <AlertCircle className="w-3 h-3 text-red-500 flex-shrink-0" />}
+                                <Beaker className="w-2.5 h-2.5 text-slate-400" />
+                                <span className={d.status === 'available' ? 'text-green-700' : 'text-red-700 font-semibold'}>
+                                  {d.name}
+                                  {d.status === 'available' && d.turnaround_hours != null ? ` (${d.turnaround_hours}h turnaround)` : ''}
+                                  {d.status !== 'available' ? ' — NOT AVAILABLE' : ''}
+                                </span>
+                              </div>
+                            ))}
+                            {validation.medications?.map((m: any) => (
+                              <div key={m.name} className="flex items-center gap-1.5 text-[11px]">
+                                {m.status === 'in_stock'
+                                  ? <CheckCircle className="w-3 h-3 text-green-500 flex-shrink-0" />
+                                  : m.status === 'low_stock'
+                                    ? <AlertTriangle className="w-3 h-3 text-amber-500 flex-shrink-0" />
+                                    : <AlertCircle className="w-3 h-3 text-red-500 flex-shrink-0" />}
+                                <Pill className="w-2.5 h-2.5 text-slate-400" />
+                                <span className={
+                                  m.status === 'in_stock' ? 'text-green-700'
+                                  : m.status === 'low_stock' ? 'text-amber-700 font-semibold'
+                                  : 'text-red-700 font-semibold'
+                                }>
+                                  {m.name}
+                                  {m.status === 'in_stock' ? ` (${m.quantity} in stock)` : ''}
+                                  {m.status === 'low_stock' ? ` — LOW STOCK (${m.quantity} units)` : ''}
+                                  {m.status === 'out_of_stock' || m.status === 'not_found' ? ' — OUT OF STOCK' : ''}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Alternative facility suggestion */}
+                          {validation.suggested_facility && (
+                            <button
+                              onClick={() => {
+                                const alt = facilities.find((f: any) => f.id === validation.suggested_facility.id);
+                                if (alt) onFacilitySelect(alt);
+                              }}
+                              className="w-full text-left mt-1 px-2.5 py-2 rounded-lg bg-white border border-blue-200 hover:bg-blue-50 transition-colors"
+                            >
+                              <p className="text-[10px] font-bold text-blue-600 uppercase">💡 Suggested Alternative</p>
+                              <p className="text-xs text-blue-800 font-semibold">{validation.suggested_facility.name}</p>
+                              <p className="text-[10px] text-blue-600 mt-0.5">Has all required resources → tap to switch</p>
+                            </button>
+                          )}
+
+                          {/* Override checkbox for failed validation */}
+                          {!validation.pass && (
+                            <label className="flex items-start gap-2 mt-1 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={overrideWarning}
+                                onChange={e => setOverrideWarning(e.target.checked)}
+                                className="mt-0.5 rounded border-red-300 text-red-600 focus:ring-red-500"
+                              />
+                              <span className="text-[11px] text-red-600 leading-tight">
+                                I understand the risks. Proceed with referral despite missing resources.
+                              </span>
+                            </label>
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -653,13 +882,20 @@ export default function DoctorConsultationRoom() {
                     disabled={
                       refSending ||
                       !refReason.trim() ||
-                      (refMode === 'specialist' ? !refService : !selectedDoctor)
+                      (refMode === 'specialist' ? !refService : !selectedDoctor) ||
+                      (refMode === 'specialist' && validation && !validation.pass && !overrideWarning)
                     }
-                    className="w-full bg-purple-600 hover:bg-purple-700 h-11 font-semibold"
+                    className={`w-full h-11 font-semibold ${
+                      validation && !validation.pass && overrideWarning
+                        ? 'bg-amber-600 hover:bg-amber-700'
+                        : 'bg-purple-600 hover:bg-purple-700'
+                    }`}
                   >
                     {refSending
                       ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Creating...</>
-                      : <><Send className="w-4 h-4 mr-2" />{refMode === 'doctor' ? 'Refer to Doctor' : 'Create Referral'}</>}
+                      : validation && !validation.pass && overrideWarning
+                        ? <><AlertTriangle className="w-4 h-4 mr-2" />Create Referral (Override)</>
+                        : <><Send className="w-4 h-4 mr-2" />{refMode === 'doctor' ? 'Refer to Doctor' : 'Create Referral'}</>}
                   </Button>
                 </div>
               )}
